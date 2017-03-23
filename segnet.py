@@ -14,9 +14,8 @@ def encode(x, f, k, N):
 
 # Decoder network, generates high res output map using pooling indices for
 # upsampling
-def decode(x, masks, f, k):
-    h = tf.Variable(tf.random_normal([f, f, k, 3]))
-    y = x
+def decode(x, masks, f, k, num_classes):
+    h = tf.Variable(tf.random_normal([f, f, f, k, num_classes]))
     for mask in masks:
-        y = util.up_sample(y, mask, f)
-    return tf.nn.convolution(y, h, "SAME")
+        x = util.up_sample(x, mask, f)
+    return tf.nn.convolution(x, h, "SAME")

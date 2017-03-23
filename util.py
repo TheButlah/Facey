@@ -26,7 +26,8 @@ def conv(x, f, k):
 def down_sample(x, f):
     k = get_channels(x)
     x = conv(x, f, k)
-    y = tf.nn.pool(x, [2, 2, 2], "MAX", "SAME")
+    y = tf.nn.pool(x, window_shape=[2, 2, 2], pooling_type="MAX", strides=[2, 2, 2], padding="SAME")
+    print(y.get_shape())
     mask = tf.equal(x, nearest_neighbor_3d(y))
     mask = tf.cast(mask, tf.float32)
     return y, mask
@@ -34,7 +35,7 @@ def down_sample(x, f):
 # Create sparse higher-res tensor using pooling indices
 def up_sample(x, mask, f):
     k = get_channels(x)
-    y = nearest_neighbor_2d(x)
+    y = nearest_neighbor_3d(x)
     y = y * mask
     return conv(y, f, k)
 
@@ -67,5 +68,4 @@ def nearest_neighbor_3d(x):
     y = tf.tile(y, [1, 1, 2, 1])
     y = tf.reshape(y, [-1, 2 * n, 2 * n, 2 * n, c])
     y = tf.transpose(y, [0, 2, 3, 1, 4])
-    print(y.get_shape())
     return y

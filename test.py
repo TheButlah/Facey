@@ -21,7 +21,7 @@ def main():
 
     x = tf.placeholder(tf.float32, [None, 16, 16, 16, 1])
     h, masks = segnet.encode(x, f, k, N)
-    y_hat = segnet.decode(h, masks, f, k)
+    y_hat = segnet.decode(h, masks, f, k, 2)
     init = tf.global_variables_initializer()
 
     # Test
