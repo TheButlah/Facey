@@ -35,7 +35,7 @@ def down_sample(x, f):
 def up_sample(x, mask, f):
     k = get_channels(x)
     y = nearest_neighbor_2d(x)
-    y = tf.mul(y, mask)
+    y = y * mask
     return conv(y, f, k)
 
 # Linear transformation from tensor of shape [num_batches, n, n, k] to
