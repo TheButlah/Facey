@@ -1,30 +1,29 @@
 import numpy as np
 import tensorflow as tf
-import util
+import segnet
 
-images = np.arange(96)
-images = np.reshape(images, (-1, 4, 4, 3))
-print "Image 1"
-print images[0, :, :, 0]
-print images[0, :, :, 1]
-print images[0, :, :, 2]
-print "Image 2"
-print images[1, :, :, 0]
-print images[1, :, :, 1]
-print images[1, :, :, 2]
+# Create data
+x1 = np.zeros((16, 16, 3))
+x2 = np.zeros((16, 16, 3))
+r = 3
+for i in range(16):
+    for j in range(16):
+        n = i * 16 + j * 1
+        x1[i,j,:] = np.arange(3 * n, 3 * (n+1))
+        x2[i,j,:] = np.arange(48 + 3 * n, 48 + 3 * (n+1))
+X = np.array([x1, x2])
 
-x = tf.placeholder(tf.float32, [None, 4, 4, 3])
-y = util.down_sample(x, 2)
+# Create network
+f = 2
+k = 5
+N = 2
+
+x = tf.placeholder(tf.float32, [None, 16, 16, 3])
+h, masks = segnet.encode(x, f, k, N)
+y_hat = segnet.decode(h, masks, f, k)
 init = tf.global_variables_initializer()
 
+# Test
 with tf.Session() as sess:
     sess.run(init)
-    y_obs = sess.run(y, feed_dict={x: images})
-    print "Result 1"
-    print y_obs[0, :, :, 0]
-    print y_obs[0, :, :, 1]
-    print y_obs[0, :, :, 2]
-    print "Result 2"
-    print y_obs[1, :, :, 0]
-    print y_obs[1, :, :, 1]
-    print y_obs[1, :, :, 2]
+    Y_hat = sess.run(y_hat, feed_dict={x: X})
