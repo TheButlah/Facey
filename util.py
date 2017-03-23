@@ -6,7 +6,7 @@ def get_channels(x):
 
 # Create a random filter of size [f, f, k, k]
 def random_filter(f, k):
-    return tf.Variable(tf.random_normal([f, f, k, k]))
+    return tf.Variable(tf.random_normal([f, f, f, k, k]))
 
 # Batch normalize
 def batch_norm(x):
@@ -26,8 +26,8 @@ def conv(x, f, k):
 def down_sample(x, f):
     k = get_channels(x)
     x = conv(x, f, k)
-    y = tf.nn.max_pool(x, [1, 2, 2, 1], [1, 2, 2, 1], "VALID")
-    mask = tf.equal(x, nearest_neighbor_2d(y))
+    y = tf.nn.pool(x, [2, 2, 2], "MAX", "SAME")
+    mask = tf.equal(x, nearest_neighbor_3d(y))
     mask = tf.cast(mask, tf.float32)
     return y, mask
 
@@ -67,4 +67,5 @@ def nearest_neighbor_3d(x):
     y = tf.tile(y, [1, 1, 2, 1])
     y = tf.reshape(y, [-1, 2 * n, 2 * n, 2 * n, c])
     y = tf.transpose(y, [0, 2, 3, 1, 4])
+    print(y.get_shape())
     return y

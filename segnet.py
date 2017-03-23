@@ -4,7 +4,7 @@ import util
 # Encoder network, generates low res feature map with intermediate max pooling
 # indicies
 def encode(x, f, k, N):
-    h = tf.Variable(tf.random_normal([f, f, 3, k]))
+    h = tf.Variable(tf.random_normal([f, f, f, 1, k]))
     y = tf.nn.convolution(x, h, "SAME")
     masks = []
     for i in range(N):
