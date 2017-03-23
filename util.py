@@ -25,8 +25,8 @@ def conv(x, f, k):
 # Max pool
 def down_sample(x, f):
     k = get_channels(x)
-    y = conv(x, f, k)
-    y = tf.nn.max_pool(y, [1, 2, 2, 1], [1, 2, 2, 1], "VALID")
+    x = conv(x, f, k)
+    y = tf.nn.max_pool(x, [1, 2, 2, 1], [1, 2, 2, 1], "VALID")
     mask = tf.equal(x, nearest_neighbor_2d(y))
     mask = tf.cast(mask, tf.float32)
     return y, mask
