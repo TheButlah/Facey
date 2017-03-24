@@ -42,7 +42,7 @@ def up_sample(x, mask, f):
 # [num_batches, n, n, num_classes]
 # h has shape [n, n, k, num_classes]
 def tensor_mul(x, h):
-    return tf.einsum('ijkl,jkml->ijkm', x, h)
+    return tf.einsum('ijkl,jklm->ijkm', x, h)
 
 def nearest_neighbor_2d(x):
     s = x.get_shape().as_list()
