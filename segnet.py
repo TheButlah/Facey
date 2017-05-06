@@ -1,6 +1,7 @@
 import tensorflow as tf
 import util
 
+
 # Encoder network, generates low res feature map with intermediate max pooling
 # indicies
 def encode(x, f, k, N):
@@ -11,6 +12,7 @@ def encode(x, f, k, N):
         y, mask = util.down_sample(y, f)
         masks = [mask] + masks
     return y, masks
+
 
 # Decoder network, generates high res output map using pooling indices for
 # upsampling
