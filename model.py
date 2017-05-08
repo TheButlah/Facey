@@ -7,7 +7,7 @@ def batch_norm(x, shape, phase_train, scope='BN'):
     """
     Batch normalization on convolutional maps.
     Ref.: http://stackoverflow.com/questions/33949786/how-could-i-use-batch-normalization-in-tensorflow
-    Note: The original author's code has been modified to generalize the order of the input tensor
+    Note: The original author's code has been modified to generalize the order of the input tensor, where 1<=n<=3
     
     Args:
         x:           Tensor,  B...D input maps (e.g. BHWD or BXYZD)
@@ -40,7 +40,7 @@ def batch_norm(x, shape, phase_train, scope='BN'):
 
 
 def conv(input, input_shape, num_features, phase_train, size=3, seed=None, scope='Conv'):
-    with tf.name_scope(scope) as scp:
+    with tf.variable_scope(scope):
         kernel_shape = [size]*(len(input_shape)-2)
         kernel_shape.append(input_shape[-1])
         kernel_shape.append(num_features)
@@ -50,8 +50,12 @@ def conv(input, input_shape, num_features, phase_train, size=3, seed=None, scope
         convolved_shape = input_shape
         convolved_shape[-1] = num_features
         # example: input_shape is BHWD, convolved_shape is [B,H,W,num_features]
-        normalized = batch_norm(convolved, convolved_shape, phase_train)
-        return tf.nn.relu(normalized, name='ReLU'), convolved_shape  # Bias not needed because of batch norm
+        return batch_norm(convolved, convolved_shape, phase_train), convolved_shape
+
+
+def relu(input, scope='Relu'):
+    with tf.variable_scope(scope):
+        return tf.nn.relu(input, name='Relu')
 
 
 def setup_graph(shape, beta=0.01, seed=None, load_model=None):
@@ -61,18 +65,20 @@ def setup_graph(shape, beta=0.01, seed=None, load_model=None):
     y_shape = shape
     y_shape[-1] = 1  # All but last dim should be same shape as x_shape
 
-    with tf.name_scope('Input') as scope:
+    with tf.variable_scope('Input'):
         x = tf.placeholder(tf.int32, shape=x_shape, name="X")
         y = tf.placeholder(tf.int32, shape=y_shape, name="Y")
         phase_train = tf.placeholder(tf.bool, name="Phase")
 
-    with tf.name_scope('Preprocessing') as scope:
+    with tf.variable_scope('Preprocessing'):
         # We want to normalize
-        x_norm = batch_norm(x, x_shape, phase_train, scope=scope)
+        x_norm = batch_norm(x, x_shape, phase_train, scope='X-Norm')
 
-    with tf.name_scope('Encoder') as scope:
-        conv1_1, last_shape = conv(x, x_shape, 64, phase_train, scope='Conv1_1')
-        conv1_2, last_shape = conv(x, last_shape, 64, phase_train, scope='Conv1_2')
+    with tf.variable_scope('Encoder'):
+        conv1_1, last_shape = conv(x_norm, x_shape, 64, phase_train, scope='Conv1_1')
+        relu1_1 = relu(conv1_1, scope='Relu1_1')
+        conv1_2, last_shape = conv(relu1_1, last_shape, 64, phase_train, scope='Conv1_2')
+        relu1_2 = relu(conv1_2, scope='Relu1_2')
         #pool now?
     # Start the rest of the actual network
     pass
