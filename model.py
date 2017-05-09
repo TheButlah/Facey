@@ -108,5 +108,5 @@ class GenSeg:
                 current_time = time()
                 if (current_time - last_time) >= 5:  # Only print progress every 5 seconds
                     last_time = current_time
-                    print("Current Loss Value: %.10f, Percent Complete: %f" % (loss_val, epoch / num_epochs))
+                    print("Current Loss Value: %.10f, Percent Complete: %f" % (loss_val, epoch / num_epochs * 100))
             print("Completed Training.")
