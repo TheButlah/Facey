@@ -1,4 +1,5 @@
 import tensorflow as tf
+import numpy as np
 
 
 # Determine number of channels from tensor of shape [height, width, channels]
@@ -78,3 +79,26 @@ def nearest_neighbor_3d(x):
     y = tf.reshape(y, [-1, 2 * n, 2 * n, 2 * n, c])
     y = tf.transpose(y, [0, 2, 3, 1, 4])
     return y
+
+
+def gen_occupancy_grid(input, lower_left, upper_right, divisions):
+    output = np.zeros(divisions)
+    lengths = upper_right - lower_left
+    intervals = lengths / divisions
+    offsets = input - lower_left
+    indices = np.floor(offsets / intervals)
+    indices = indices.astype(int)
+    print indices
+    for row in indices:
+        print row
+        if np.sum(row >= np.zeros([1, 3])) == 3 and np.sum(row < divisions) == 3:
+            print "hi"
+            output[row[0], row[1], row[2]] = 1
+    return output
+
+# lower_left = np.array([1.0, 0.0, 0.0])
+# upper_right = np.array([4.0, 3.0, 6.0])
+# division = np.array([6, 6, 12])
+# input = np.array([[1.1, 1.2, 1.3], [1.1, 1.2, 5.2], [1.2, 1.1, 3.01], [4.1, 2.2, 5.2]])
+# output = gen_occupancy_grid(input, lower_left, upper_right, division)
+# print output
