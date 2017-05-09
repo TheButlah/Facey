@@ -2,19 +2,21 @@ import numpy as np
 import tensorflow as tf
 import random
 
+from util import nearest_neighbor_2d, nearest_neighbor_3d
+
 
 def batch_norm(x, shape, phase_train, scope='BN'):
     """
     Batch normalization on convolutional maps.
     Ref.: http://stackoverflow.com/questions/33949786/how-could-i-use-batch-normalization-in-tensorflow
     Note: The original author's code has been modified to generalize the order of the input tensor
-    
+
     Args:
         x:           Tensor,  B...D input maps (e.g. BHWD or BXYZD)
         shape:       Tuple, shape of input
         phase_train: boolean tf.Variable, true indicates training phase
         scope:       string, variable scope
-    
+
     Returns:
         normed:      batch-normalized maps
     """
@@ -53,6 +55,19 @@ def conv(input, input_shape, num_features, phase_train, size=3, seed=None, scope
         normalized = batch_norm(convolved, convolved_shape, phase_train)
         return tf.nn.relu(normalized, name='ReLU'), convolved_shape  # Bias not needed because of batch norm
 
+def pool(input, input_shape, scope='Pool')
+    with tf.variable_scope(scope):
+        if len(input_shape) == 4:
+            nearest_neighbor = nearest_neighbor_2d
+            window_shape = [2, 2]
+        elif len(input_shape) == 5:
+            nearest_neighbor = nearest_neighbor_3d
+            window_shape = [2, 2, 2]
+        else: raise Exception('Tensor shape not supported')
+
+        output = tf.nn.pool(input, window_shape=window_shape, pooling_type="MAX", strides=window_shape, padding="SAME")
+        output_shape = [input_shape[0]] + [input_shape[i] / 2 for i in range(1, len(input_shape) - 1)] + [input_shape[-1]]
+        mask = nearest_neighbor(input)
 
 def setup_graph(shape, beta=0.01, seed=None, load_model=None):
     if load_model is None:
