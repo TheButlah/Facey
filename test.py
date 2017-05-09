@@ -1,5 +1,6 @@
 import numpy as np
 from model import GenSeg
+import atexit
 
 
 def main():
@@ -11,6 +12,7 @@ def main():
     X = np.random.rand(*shape)  # allows the list to be passed as the various arguments to the function
     Y = np.random.random_integers(0, num_classes-1, size=shape[:-1])
     model = GenSeg(input_shape=input_shape, num_classes=num_classes)
+    atexit.register(model.save_model)
     model.train(x_train=X, y_train=Y, num_epochs=1000)
 
 if __name__ == "__main__":

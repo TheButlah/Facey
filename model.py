@@ -1,9 +1,9 @@
 import tensorflow as tf
 import numpy as np
 
-from time import time
+from time import time, strftime
 from util import *
-
+import os
 
 class GenSeg:
     """GenSeg is a supervised machine learning model that semantically segments n-dimensional data.
@@ -39,7 +39,6 @@ class GenSeg:
         self._num_classes = num_classes
         self._seed = seed
         self._graph = tf.Graph()
-        self._vars = []
         with self._graph.as_default():
             with tf.variable_scope('Input'):
                 self._x = tf.placeholder(tf.float32, shape=x_shape, name="X")
@@ -160,3 +159,18 @@ class GenSeg:
                     print("Current Loss Value: %.10f, Percent Complete: %.4f" % (loss_val, epoch / num_epochs * 100))
             if start_stop_info:
                 print("Completed Training.")
+
+    def save_model(self, save_path=None):
+        """Saves the model in the specified file.
+        
+        Args:
+            save_path:  The relative path to the file. By default, it is 
+                saved/GenSeg-Year-Month-Date_Hour-Minute-Second.ckpt
+        """
+        with self._sess.as_default():
+            print("Saving Model")
+            if save_path is None:
+                save_path = "saved/GenSeg-%s.ckpt" % strftime("%Y-%m-%d_%H-%M-%S")
+            os.makedirs(os.path.dirname(save_path), exist_ok=True)
+            path = self._saver.save(self._sess, save_path)
+            print("Model successfully saved in file: %s" % path)
