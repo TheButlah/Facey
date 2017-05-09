@@ -1,11 +1,12 @@
 import numpy as np
 import tensorflow as tf
 import segnet
-from model import setup_graph
+from model import GenSeg
 
 
 def main():
-    setup_graph(shape=[10, 32, 32, 32, 1], num_classes=7)
+    model = GenSeg(input_shape=[10, 32, 32, 32, 1], num_classes=7)
+    model.train(x_train=None, y_train=None, batch_size=None)
 
 def test1():
     # Create data
