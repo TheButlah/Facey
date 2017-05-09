@@ -2,6 +2,7 @@ import numpy as np
 import tensorflow as tf
 import random
 
+from time import time
 from util import nearest_neighbor_2d, nearest_neighbor_3d
 
 
@@ -41,7 +42,7 @@ def batch_norm(x, shape, phase_train, scope='BN'):
     return normed
 
 
-def conv(input, input_shape, num_features, phase_train, size=3, seed=None, scope='Conv'):
+def conv(input, input_shape, num_features, phase_train, do_bn=True, size=3, seed=None, scope='Conv'):
     with tf.variable_scope(scope):
         kernel_shape = [size]*(len(input_shape)-2)
         kernel_shape.append(input_shape[-1])
@@ -52,7 +53,10 @@ def conv(input, input_shape, num_features, phase_train, size=3, seed=None, scope
         convolved_shape = input_shape
         convolved_shape[-1] = num_features
         # example: input_shape is BHWD, convolved_shape is [B,H,W,num_features]
-        return batch_norm(convolved, convolved_shape, phase_train), convolved_shape
+        if do_bn:
+            return batch_norm(convolved, convolved_shape, phase_train), convolved_shape
+        else:
+            return convolved, convolved_shape
 
 
 def relu(input, scope='Relu'):
@@ -95,12 +99,11 @@ def unpool(input, input_shape, mask, scope='Unpool'):
         return output, output_shape
 
 
-def setup_graph(shape, beta=0.01, seed=None, load_model=None):
+def setup_graph(shape, num_classes, seed=None, load_model=None):
     if load_model is None:
         pass
     x_shape = shape  # 1st dim should be the size of dataset
-    y_shape = shape
-    y_shape[-1] = 1  # All but last dim should be same shape as x_shape
+    y_shape = shape[:-1]  # Rank of y should be one less
 
     with tf.variable_scope('Input'):
         x = tf.placeholder(tf.int32, shape=x_shape, name="X")
@@ -136,13 +139,57 @@ def setup_graph(shape, beta=0.01, seed=None, load_model=None):
         relu4_2 = relu(conv4_2, scope='Relu4_2')
         pool4, last_shape, mask4 = pool(relu4_2, last_shape, scope='Pool4')
 
-        conv5_1, last_shape = conv(pool4, last_shape, 64, phase_train, seed=seed, scope='Conv5_1')
-        relu5_1 = relu(conv5_1, scope='Relu5_1')
-        conv5_2, last_shape = conv(relu5_1, last_shape, 64, phase_train, seed=seed, scope='Conv5_2')
-        relu5_2 = relu(conv5_2, scope='Relu5_2')
-        pool5, last_shape, mask5 = pool(relu5_2, last_shape, scope='Pool5')
-
     with tf.variable_scope('Decoder'):
-        pass
-    # Start the rest of the actual network
-    pass
+        unpool5, last_shape = unpool(pool4, last_shape, mask4, scope='Unpool5')
+        conv5_1, last_shape = conv(unpool5, last_shape, 64, phase_train, seed=seed, scope='Conv5_1')
+        conv5_2, last_shape = conv(conv5_1, last_shape, 64, phase_train, seed=seed, scope='Conv5_2')
+
+        unpool6, last_shape = unpool(conv5_2, last_shape, mask3, scope='Unpool6')
+        conv6_1, last_shape = conv(unpool6, last_shape, 64, phase_train, seed=seed, scope='Conv6_1')
+        conv6_2, last_shape = conv(conv6_1, last_shape, 64, phase_train, seed=seed, scope='Conv6_2')
+
+        unpool7, last_shape = unpool(conv6_2, last_shape, mask2, scope='Unpool7')
+        conv7_1, last_shape = conv(unpool7, last_shape, 64, phase_train, seed=seed, scope='Conv7_1')
+        conv7_2, last_shape = conv(conv7_1, last_shape, 64, phase_train, seed=seed, scope='Conv7_2')
+
+        unpool8, last_shape = unpool(conv7_2, last_shape, mask1, scope='Unpool8')
+        conv8_1, last_shape = conv(unpool8, last_shape, 64, phase_train, seed=seed, scope='Conv8_1')
+        conv8_2, last_shape = conv(conv8_1, last_shape, 64, phase_train, seed=seed, scope='Conv8_2')
+
+    with tf.variable_scope('Softmax'):
+        scores = conv(conv8_2, last_shape, num_classes, phase_train, do_bn=False, seed=seed, scope='Scores')
+        y_hat = tf.nn.softmax(scores, name='Y-Hat')  # Operates on last dimension
+
+    with tf.variable_scope('Pipelining'):
+        loss = tf.reduce_mean(
+            tf.nn.sparse_softmax_cross_entropy_with_logits(logits=scores, labels=y),
+            name='Loss'
+        )
+        train_step = tf.train.AdamOptimizer().minimize(loss)
+
+    X = np.random.rand([10, 32, 32, 32, 1])
+    Y = np.random.random_integers(0, num_classes-1, size=[10, 32, 32, 32])
+
+    num_epochs = 10000
+    # Setup TensorFlow Session and initialize graph variables
+    sess = tf.Session()
+
+    with sess.as_default():
+        saver = tf.train.Saver()
+        if load_model is not None:
+            print("Restoring Model...")
+            saver.restore(sess, load_model)
+            print("Model Restored!")
+        else:
+            sess.run(tf.global_variables_initializer())
+
+        # Training loop for parameter tuning
+        print("Starting training for %d epochs" % num_epochs)
+        last_time = time()
+        for epoch in range(num_epochs):
+            _, loss_val = sess.run([train_step, loss], feed_dict={x: X, y: Y, phase_train: True})
+            current_time = time()
+            if (current_time - last_time) >= 2:
+                last_time = current_time
+                print("Current Loss Value: %.10f, Percent Complete: %f" % (loss_val, epoch / num_epochs))
+        print("Completed Training.")
