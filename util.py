@@ -88,11 +88,11 @@ def gen_occupancy_grid(input, lower_left, upper_right, divisions):
     offsets = input - lower_left
     indices = np.floor(offsets / intervals)
     indices = indices.astype(int)
-    print indices
+    print(indices)
     for row in indices:
-        print row
+        print(row)
         if np.sum(row >= np.zeros([1, 3])) == 3 and np.sum(row < divisions) == 3:
-            print "hi"
+            print("hi")
             output[row[0], row[1], row[2]] = 1
     return output
 

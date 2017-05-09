@@ -24,10 +24,10 @@ def batch_norm(x, shape, phase_train, scope='BN'):
     with tf.variable_scope(scope):
         n_out = shape[-1]  # depth of input maps
         beta = tf.Variable(tf.constant(0.0, shape=[n_out]),
-                           name='beta', trainable=True)
+                           name='Beta', trainable=True)
         gamma = tf.Variable(tf.constant(1.0, shape=[n_out]),
-                            name='gamma', trainable=True)
-        batch_mean, batch_var = tf.nn.moments(x, shape[:-1], name='moments')
+                            name='Gamma', trainable=True)
+        batch_mean, batch_var = tf.nn.moments(x, list(range(len(shape[:-1]))), name='Moments')
         ema = tf.train.ExponentialMovingAverage(decay=0.5)
 
         def mean_var_with_update():
@@ -50,7 +50,7 @@ def conv(input, input_shape, num_features, phase_train, do_bn=True, size=3, seed
         # example: input_shape is BHWD, kernel_shape is [3,3,D,num_features]
         kernel = tf.Variable(tf.random_normal(kernel_shape, seed=seed, name='Kernel'))
         convolved = tf.nn.convolution(input, kernel, padding="SAME", name='Conv')
-        convolved_shape = input_shape
+        convolved_shape = list(input_shape)
         convolved_shape[-1] = num_features
         # example: input_shape is BHWD, convolved_shape is [B,H,W,num_features]
         if do_bn:
@@ -106,7 +106,7 @@ def setup_graph(shape, num_classes, seed=None, load_model=None):
     y_shape = shape[:-1]  # Rank of y should be one less
 
     with tf.variable_scope('Input'):
-        x = tf.placeholder(tf.int32, shape=x_shape, name="X")
+        x = tf.placeholder(tf.float32, shape=x_shape, name="X")
         y = tf.placeholder(tf.int32, shape=y_shape, name="Y")
         phase_train = tf.placeholder(tf.bool, name="Phase")
 
@@ -157,7 +157,7 @@ def setup_graph(shape, num_classes, seed=None, load_model=None):
         conv8_2, last_shape = conv(conv8_1, last_shape, 64, phase_train, seed=seed, scope='Conv8_2')
 
     with tf.variable_scope('Softmax'):
-        scores = conv(conv8_2, last_shape, num_classes, phase_train, do_bn=False, seed=seed, scope='Scores')
+        scores, _ = conv(conv8_2, last_shape, num_classes, phase_train, do_bn=False, seed=seed, scope='Scores')
         y_hat = tf.nn.softmax(scores, name='Y-Hat')  # Operates on last dimension
 
     with tf.variable_scope('Pipelining'):
@@ -167,8 +167,8 @@ def setup_graph(shape, num_classes, seed=None, load_model=None):
         )
         train_step = tf.train.AdamOptimizer().minimize(loss)
 
-    X = np.random.rand([10, 32, 32, 32, 1])
-    Y = np.random.random_integers(0, num_classes-1, size=[10, 32, 32, 32])
+    X = np.random.rand(*shape)  # allows the list to be passed as the various arguments to the function
+    Y = np.random.random_integers(0, num_classes-1, size=shape[:-1])
 
     num_epochs = 10000
     # Setup TensorFlow Session and initialize graph variables

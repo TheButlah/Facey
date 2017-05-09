@@ -1,9 +1,13 @@
 import numpy as np
 import tensorflow as tf
 import segnet
+from model import setup_graph
 
 
 def main():
+    setup_graph(shape=[10, 32, 32, 32, 1], num_classes=7)
+
+def test1():
     # Create data
     x1 = np.zeros((16, 16, 16, 1))
     x2 = np.zeros((16, 16, 16, 1))
