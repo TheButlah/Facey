@@ -4,7 +4,7 @@ import atexit
 
 
 def main():
-    shape = [10, 64, 64, 64, 1]
+    shape = [10, 32, 32, 32, 1]
     input_shape = list(shape)
     input_shape[0] = None
     print(input_shape)
@@ -12,8 +12,16 @@ def main():
     X = np.random.rand(*shape)  # allows the list to be passed as the various arguments to the function
     Y = np.random.random_integers(0, num_classes-1, size=shape[:-1])
     model = GenSeg(input_shape=input_shape, num_classes=num_classes)
-    atexit.register(model.save_model)
-    model.train(x_train=X, y_train=Y, num_epochs=1000)
+    model.train(x_train=X, y_train=Y, num_epochs=50)
+    result = model.apply(X)
+    print("Probabilities: ", result)
+    result = np.argmax(axis=-1)
+    print("Argmax: ", result)
+    result = np.equal(result, Y)
+    print("Equality: ", result)
+    result = np.average(result.astype(dtype=np.float32))
+    print("Average: ", result)
+
 
 if __name__ == "__main__":
     main()

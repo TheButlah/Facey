@@ -128,11 +128,12 @@ class GenSeg:
         Args:
             x_train:  A numpy ndarray that contains the data to train over. Should should have a shape of 
                 [batch_size, spatial_dim1, ... , spatial_dimN, channels]. Only 1<=N<=3 spatial dimensions are supported
-                currently. These should correspond to the shape of y_train
+                currently. These should correspond to the shape of y_train.
             
             y_train:  A numpy ndarray that contains the labels that correspond to the data being trained on. Should have
                 a shape of [batch_size, spatial_dim1, ... , spatial_dimN]. Only 1<=N<=3 spatial dimensions are supported
-                currently. These should correspond to the shape of x_train
+                currently. These should correspond to the shape of x_train. The actual values in the tensor should be
+                integers ranging from [0, num_classes)
             
             num_epochs:  The number of iterations over the provided batch to perform until training is considered to be
                 complete. If all your data fits in memory and you don't need to mini-batch, then this should be a large
@@ -160,11 +161,25 @@ class GenSeg:
             if start_stop_info:
                 print("Completed Training.")
 
+    def apply(self, x_data):
+        """Applies the model to the batch of data provided. Typically called after the model is trained.
+        
+        Args:
+            x_data:  A numpy ndarray of the data to apply the model to. Should have the same shape as the training data.
+                Example: x_data.shape is [batch_size, 640, 480, 3] for a 640x480 RGB image
+        
+        Returns:
+            A numpy ndarray of the data, with the last dimension being the class probabilities instead of channels.
+            Example: result.shape is [batch_size, 640, 480, 10] for a 640x480 RGB image with 10 target classes
+        """
+        with self._sess.as_default():
+            return self._sess.run([self._y_hat], feed_dict={self._x: x_data, self._phase_train: False})
+
     def save_model(self, save_path=None):
         """Saves the model in the specified file.
         
         Args:
-            save_path:  The relative path to the file. By default, it is 
+            save_path:  The relative path to the file. By default, it is
                 saved/GenSeg-Year-Month-Date_Hour-Minute-Second.ckpt
         """
         with self._sess.as_default():
