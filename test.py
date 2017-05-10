@@ -10,26 +10,43 @@ def main():
 
 
 def test2():
-    input_shape = [None, 176, 608, 3]
     num_classes = 11
     filenames = ['data/image_data/testing/0000/000000.png']
-    shape = (len(filenames), 352, 1216, 3)
+    shape = (len(filenames), 176, 608, 3)
     n, h, w, c = shape
-    image_data = np.zeros((n, h//2, w//2, c))
+    image_data = np.zeros((n, h, w, c))
 
     i = 0
     for f in filenames:
         image = misc.imread(f)
-        image_data[i, :, :, :] = image[:h:2, :w:2, :]
+        image_data[i, :, :, :] = image[:h*2:2, :w*2:2, :]
         i += 1
 
-    model = GenSeg(input_shape=input_shape, num_classes=num_classes, load_model='saved/Calios.ckpt')
+    model = GenSeg(input_shape=[None, h, w, c], num_classes=num_classes, load_model='saved/Calios.ckpt')
     result = model.apply(image_data)
     result = np.argmax(result, axis=-1).astype(np.float32)
-    result *= (256/num_classes)
+
+    colored = np.empty(shape)
+
+    def get_color(label):  # function to map ints to RGB array
+        return {
+            1: [153, 0, 0],  # building
+            2: [0, 51, 102],  # sky
+            3: [160, 160, 160],  # road
+            4: [0, 102, 0],  # vegetation
+            5: [255, 228, 196],  # sidewalk
+            6: [255, 200, 50],  # car
+            7: [255, 153, 255],  # pedestrian
+            8: [204, 153, 255],  # cyclist
+            9: [130, 255, 255],  # signage
+            10: [193, 120, 87],  # fence
+        }.get(label, [255, 255, 255])  # Unknown
+
+    for (i, x, y), value in np.ndenumerate(result):
+        colored[i, x, y] = get_color(value)
 
     i = 0
-    for img in result:
+    for img in colored:
         misc.imsave('%d.png' % i, img)
         i += 1
 
