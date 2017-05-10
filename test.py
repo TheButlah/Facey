@@ -10,7 +10,7 @@ def main():
 
 
 def test2():
-    num_classes = 11
+    num_classes = 6
     filenames = ['data/image_data/testing/0000/000040.png']
     shape = (len(filenames), 176, 608, 3)
     n, h, w, c = shape
@@ -22,7 +22,7 @@ def test2():
         image_data[i, :, :, :] = image[:h*2:2, :w*2:2, :]
         i += 1
 
-    model = GenSeg(input_shape=[None, h, w, c], num_classes=num_classes, load_model='saved/Calios.ckpt')
+    model = GenSeg(input_shape=[None, h, w, c], num_classes=num_classes, load_model='saved/GenSeg-2017-05-10_05-31-19.ckpt')
     result = model.apply(image_data)
     result = np.argmax(result, axis=-1)
 

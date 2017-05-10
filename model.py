@@ -200,3 +200,4 @@ class GenSeg:
             save_path = os.path.abspath(save_path)
             path = self._saver.save(self._sess, save_path)
             print("Model successfully saved in file: %s" % path)
+
