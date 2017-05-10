@@ -1,5 +1,6 @@
 import tensorflow as tf
 import numpy as np
+import os
 
 
 def batch_norm(x, shape, phase_train, scope='BN'):
@@ -133,6 +134,34 @@ def gen_occupancy_grid(x, lower_left, upper_right, divisions):
     for row in indices:
         print(row)
         if np.sum(row >= np.zeros([1, 3])) == 3 and np.sum(row < divisions) == 3:
-            print("hi")
             output[row[0], row[1], row[2]] = 1
     return output
+
+class DataReader(object):
+    def __init__(self, path, image_shape):
+        self._image_shape = image_shape
+        self._path = path
+        self._image_data = self.get_filenames(path + '/image_data/training/')
+        self._image_labels = self.get_filenames(path + '/image_labels/training/')
+        self._velodyne_data = self.get_filenames(path + '/velodyne_data/training/')
+        self._velodyne_labels = self.get_filenames(path + '/velodyne_labels/training/')
+
+    def get_filenames(self, path):
+        data_paths = os.listdir(path)
+        data_paths = sorted(data_paths)
+        data_paths = [path + data_path for data_path in data_paths]
+        filenames = []
+        for data_path in data_paths:
+            _filenames = os.listdir(data_path)
+            _filenames = sorted(_filenames)
+            _filenames = [data_path + '/' + filename for filename in _filenames]
+            filenames += _filenames
+        return filenames
+
+    def get_images(self, batch_size):
+        idxs = np.random.permuation(len())
+
+    def get_scans(self, batch_size):
+        pass
+
+dr = DataReader('/home/vdd6/Desktop/gen_seg_data', (1, 1, 1))
