@@ -15,7 +15,7 @@ def main():
     model.train(x_train=X, y_train=Y, num_epochs=50)
     result = model.apply(X)
     print("Probabilities: ", result)
-    '''result = np.argmax(result, axis=-1)
+    result = np.argmax(result, axis=-1)
     print("Argmax: ", result)
     result = np.equal(result, Y)
     print("Equality: ", result)
