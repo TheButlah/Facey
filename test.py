@@ -7,6 +7,12 @@ from util import DataReader
 def main():
     test1()
 
+def test2():
+    input_shape = [None, 176, 608, 3]
+    num_classes = 11
+    model = GenSeg(input_shape=input_shape, num_classes=num_classes, load_model='saved/Calios.ckpt'
+    #Do something
+
 def test1():
     input_shape = [None, 176, 608, 3]
     num_classes = 11
