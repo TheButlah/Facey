@@ -99,12 +99,13 @@ def unpool(x, input_shape, mask, scope='Unpool'):
 
 def nearest_neighbor_2d(x):
     s = x.get_shape().as_list()
-    n = s[1]
+    h = s[1]
+    w = s[2]
     c = s[-1]
     y = tf.tile(x, [1, 1, 2, 1])
-    y = tf.reshape(y, [-1, 2 * n * n, 1, c])
+    y = tf.reshape(y, [-1, 2 * h * w, 1, c])
     y = tf.tile(y, [1, 1, 2, 1])
-    y = tf.reshape(y, [-1, 2 * n, 2 * n, c])
+    y = tf.reshape(y, [-1, 2 * h, 2 * w, c])
     return y
 
 
@@ -160,25 +161,25 @@ class DataReader(object):
         return filenames
 
     def get_image_data(self):
-        shape = (len(self._image_data),) + self._image_shape
+        h, w, c = self._image_shape
+        shape = (len(self._image_labels), h // 2, w // 2, c)
         image_data = np.zeros(shape)
         k = 0
-        h, w, c = self._image_shape
         for filename in self._image_data:
             image = misc.imread(filename)
-            image_data[k,:,:,:] = image[0:h,0:w,0:c]
+            image_data[k,:,:,:] = image[0:h:2,0:w:2,0:c]
             k += 1
         return image_data
 
     def get_image_labels(self):
         h, w, _ = self._image_shape
-        shape = (len(self._image_labels), h, w)
+        shape = (len(self._image_labels), h // 2, w // 2)
         label_data = np.zeros(shape)
         k = 0
         for filename in self._image_labels:
             label = io.loadmat(filename)
             label = label['truth']
-            label_data[k,:,:] = label[0:h,0:w]
+            label_data[k,:,:] = label[0:h:2,0:w:2]
             k += 1
         return label_data
 
