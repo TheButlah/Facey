@@ -2,22 +2,43 @@ import numpy as np
 from model import GenSeg
 import atexit
 from util import DataReader
+from scipy import misc, io
 
 
 def main():
-    test1()
+    test2()
+
 
 def test2():
     input_shape = [None, 176, 608, 3]
     num_classes = 11
-    model = GenSeg(input_shape=input_shape, num_classes=num_classes, load_model='saved/Calios.ckpt'
-    #Do something
+    filenames = ['data/image_data/testing/0000/000000.png']
+    shape = (len(filenames), 352, 1216, 3)
+    n, h, w, c = shape
+    image_data = np.zeros((n, h//2, w//2, c))
+
+    i = 0
+    for f in filenames:
+        image = misc.imread(f)
+        image_data[i, :, :, :] = image[:h:2, :w:2, :]
+        i += 1
+
+    model = GenSeg(input_shape=input_shape, num_classes=num_classes, load_model='saved/Calios.ckpt')
+    result = model.apply(image_data)
+    result = np.argmax(result, axis=-1).astype(np.float32)
+    result *= (256/num_classes)
+
+    i = 0
+    for img in result:
+        misc.imsave('%d.png' % i, img)
+        i += 1
+
 
 def test1():
     input_shape = [None, 176, 608, 3]
     num_classes = 11
 
-    dr = DataReader('/home/vdd6/Desktop/gen_seg_data', (352, 1216, 3))
+    dr = DataReader('data/', (352, 1216, 3))
     x = dr.get_image_data()
     y = dr.get_image_labels()
     n, _, _, _ = x.shape
@@ -54,3 +75,4 @@ def test1():
 
 if __name__ == "__main__":
     main()
+

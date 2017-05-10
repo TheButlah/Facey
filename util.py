@@ -142,7 +142,7 @@ def gen_occupancy_grid(x, lower_left, upper_right, divisions):
 class DataReader(object):
     def __init__(self, path, image_shape):
         self._image_shape = image_shape
-        self._path = path
+        self._path = os.path.abspath(path)
         self._image_data = self.get_filenames(path + '/image_data/training/')
         self._image_labels = self.get_filenames(path + '/image_labels/training/')
         self._velodyne_data = self.get_filenames(path + '/velodyne_data/training/')
