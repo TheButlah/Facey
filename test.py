@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 
 def main():
-    test2('saved/Long7.ckpt')
+    test1('saved/Long7-1.ckpt')
 
 
 def test3(name):
@@ -44,7 +44,7 @@ def test2(name):
     filenames = ['data/image_data/testing/0000/000040.png']
     shape = (len(filenames), 176, 608, 3)
     n, h, w, c = shape
-    image_data = np.zeros((n, h, w, c))
+    image_data = np.zeros((n, h, w, c), dtype=np.uint8)
 
     i = 0
     for f in filenames:
@@ -58,6 +58,11 @@ def test2(name):
     result = model.apply(image_data)
     result = np.argmax(result, axis=-1)
 
+    for img in result:
+        plt.figure()
+        plt.imshow(img.astype(np.uint8))
+        plt.show()
+
     colored = np.empty(shape)
 
     for (i, x, y), value in np.ndenumerate(result):
@@ -65,7 +70,11 @@ def test2(name):
 
     i = 0
     for img in colored:
-        misc.imsave('%d.png' % i, img.astype(np.uint8), 'png')
+        img = img.astype(np.uint8, copy=False)
+        misc.imsave('%d.png' % i, img, 'png')
+        plt.figure()
+        plt.imshow(img)
+        plt.show()
         i += 1
 
 

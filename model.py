@@ -95,7 +95,7 @@ class GenSeg:
                 conv8_2, last_shape = conv(conv8_1, last_shape, num_features, self._phase_train, seed=seed, scope='Conv8_2')
 
             with tf.variable_scope('Softmax'):
-                scores, _ = conv(conv8_2, last_shape, num_classes, self._phase_train, do_bn=False, seed=seed, scope='Scores')
+                scores, _ = conv(conv8_2, last_shape, num_classes, self._phase_train, do_bn=False, size=1, seed=seed, scope='Scores')
                 self._y_hat = tf.nn.softmax(scores, name='Y-Hat')  # Operates on last dimension
 
             with tf.variable_scope('Pipelining'):
@@ -103,7 +103,7 @@ class GenSeg:
                     tf.nn.sparse_softmax_cross_entropy_with_logits(logits=scores, labels=self._y),
                     name='Loss'
                 )
-                self._train_step = tf.train.AdamOptimizer().minimize(self._loss)
+                self._train_step = tf.train.AdamOptimizer(learning_rate=0.01).minimize(self._loss)
 
             self._sess = tf.Session(graph=self._graph)  # Not sure if this really needs to explicitly specify the graph
             with self._sess.as_default():
