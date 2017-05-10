@@ -21,6 +21,16 @@ def main():
     print("Equality: ", result.shape)
     result = np.average(result.astype(dtype=np.float32))
     print("Average: ", result)
+    model.save_model('asdf.ckpt')
+    model = GenSeg(input_shape=input_shape, num_classes=num_classes, load_model='asdf.ckpt')
+    result = model.apply(X)
+    print("Probabilities: ", result.shape)
+    result = np.argmax(result, axis=-1)
+    print("Argmax: ", result.shape)
+    result = np.equal(result, Y)
+    print("Equality: ", result.shape)
+    result = np.average(result.astype(dtype=np.float32))
+    print("Average: ", result)
 
 
 if __name__ == "__main__":
