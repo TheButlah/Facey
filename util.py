@@ -1,6 +1,7 @@
 import tensorflow as tf
 import numpy as np
 import os
+from scipy import misc, io
 
 
 def batch_norm(x, shape, phase_train, scope='BN'):
@@ -158,10 +159,29 @@ class DataReader(object):
             filenames += _filenames
         return filenames
 
-    def get_images(self, batch_size):
-        idxs = np.random.permuation(len())
+    def get_image_data(self):
+        shape = (len(self._image_data),) + self._image_shape
+        image_data = np.zeros(shape)
+        k = 0
+        h, w, c = self._image_shape
+        for filename in self._image_data:
+            image = misc.imread(filename)
+            image_data[k,:,:,:] = image[0:h,0:w,0:c]
+            k += 1
+        return image_data
 
-    def get_scans(self, batch_size):
-        pass
+    def get_image_labels(self):
+        h, w, _ = self._image_shape
+        shape = (len(self._image_labels), h, w)
+        label_data = np.zeros(shape)
+        k = 0
+        for filename in self._image_labels:
+            label = io.loadmat(filename)
+            label = label['truth']
+            label_data[k,:,:] = label[0:h,0:w]
+            k += 1
+        return label_data
 
-dr = DataReader('/home/vdd6/Desktop/gen_seg_data', (1, 1, 1))
+dr = DataReader('/home/vdd6/Desktop/gen_seg_data', (374, 1238, 3))
+res = dr.get_image_data()
+res = dr.get_image_labels()
