@@ -22,7 +22,7 @@ def test2():
         image_data[i, :, :, :] = image[:h*2:2, :w*2:2, :]
         i += 1
 
-    model = GenSeg(input_shape=[None, h, w, c], num_classes=num_classes, load_model='saved/GenSeg-2017-05-10_05-31-19.ckpt')
+    model = GenSeg(input_shape=[None, h, w, c], num_classes=num_classes, load_model='saved/Long7.ckpt')
     result = model.apply(image_data)
     result = np.argmax(result, axis=-1)
 
@@ -49,7 +49,7 @@ def test1():
     y = func(y)
     n, _, _, _ = x.shape
     batch_size = 30
-    iterations = 2500
+    iterations = 9500
 
     model = GenSeg(input_shape=input_shape, num_classes=num_classes)
     atexit.register(model.save_model)  # In case of ctrl-C
