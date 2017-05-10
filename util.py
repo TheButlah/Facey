@@ -182,6 +182,6 @@ class DataReader(object):
             k += 1
         return label_data
 
-dr = DataReader('/home/vdd6/Desktop/gen_seg_data', (374, 1238, 3))
-res = dr.get_image_data()
-res = dr.get_image_labels()
+# dr = DataReader('/home/vdd6/Desktop/gen_seg_data', (374, 1238, 3))
+# res = dr.get_image_data()
+# res = dr.get_image_labels()
