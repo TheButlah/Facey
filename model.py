@@ -107,6 +107,7 @@ class GenSeg:
                 self._saver = tf.train.Saver()
                 if load_model is not None:
                     print("Restoring Model...")
+                    load_model = os.path.abspath(load_model)
                     self._saver.restore(self._sess, load_model)
                     print("Model Restored!")
                 else:
@@ -173,7 +174,7 @@ class GenSeg:
             Example: result.shape is [batch_size, 640, 480, 10] for a 640x480 RGB image with 10 target classes
         """
         with self._sess.as_default():
-            return self._sess.run([self._y_hat], feed_dict={self._x: x_data, self._phase_train: False})
+            return self._sess.run(self._y_hat, feed_dict={self._x: x_data, self._phase_train: False})
 
     def save_model(self, save_path=None):
         """Saves the model in the specified file.
@@ -186,6 +187,9 @@ class GenSeg:
             print("Saving Model")
             if save_path is None:
                 save_path = "saved/GenSeg-%s.ckpt" % strftime("%Y-%m-%d_%H-%M-%S")
-            os.makedirs(os.path.dirname(save_path), exist_ok=True)
+            dirname = os.path.dirname(save_path)
+            if dirname is not '':
+                os.makedirs(dirname, exist_ok=True)
+            save_path = os.path.abspath(save_path)
             path = self._saver.save(self._sess, save_path)
             print("Model successfully saved in file: %s" % path)
