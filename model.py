@@ -5,6 +5,7 @@ from time import time, strftime
 from util import *
 import os
 
+
 class GenSeg:
     """GenSeg is a supervised machine learning model that semantically segments n-dimensional data.
 
@@ -136,7 +137,7 @@ class GenSeg:
             y_train:  A numpy ndarray that contains the labels that correspond to the data being trained on. Should have
                 a shape of [batch_size, spatial_dim1, ... , spatial_dimN]. Only 1<=N<=3 spatial dimensions are supported
                 currently. These should correspond to the shape of x_train. The actual values in the tensor should be
-                integers ranging from [0, num_classes)
+                integers corresponding to the labels. There should only be num_classes unique integers.
 
             num_epochs:  The number of iterations over the provided batch to perform until training is considered to be
                 complete. If all your data fits in memory and you don't need to mini-batch, then this should be a large

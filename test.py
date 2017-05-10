@@ -1,17 +1,17 @@
 import numpy as np
 from model import GenSeg
 import atexit
-from util import DataReader
+from util import DataReader, original_to_label, label_to_original, get_color
 from scipy import misc, io
 
 
 def main():
-    test2()
+    test1()
 
 
 def test2():
     num_classes = 11
-    filenames = ['data/image_data/testing/0000/000000.png']
+    filenames = ['data/image_data/testing/0000/000040.png']
     shape = (len(filenames), 176, 608, 3)
     n, h, w, c = shape
     image_data = np.zeros((n, h, w, c))
@@ -24,51 +24,39 @@ def test2():
 
     model = GenSeg(input_shape=[None, h, w, c], num_classes=num_classes, load_model='saved/Calios.ckpt')
     result = model.apply(image_data)
-    result = np.argmax(result, axis=-1).astype(np.float32)
+    result = np.argmax(result, axis=-1)
 
     colored = np.empty(shape)
 
-    def get_color(label):  # function to map ints to RGB array
-        return {
-            1: [153, 0, 0],  # building
-            2: [0, 51, 102],  # sky
-            3: [160, 160, 160],  # road
-            4: [0, 102, 0],  # vegetation
-            5: [255, 228, 196],  # sidewalk
-            6: [255, 200, 50],  # car
-            7: [255, 153, 255],  # pedestrian
-            8: [204, 153, 255],  # cyclist
-            9: [130, 255, 255],  # signage
-            10: [193, 120, 87],  # fence
-        }.get(label, [255, 255, 255])  # Unknown
-
     for (i, x, y), value in np.ndenumerate(result):
-        colored[i, x, y] = get_color(value)
+        colored[i, x, y] = get_color(label_to_original(value))
 
     i = 0
     for img in colored:
-        misc.imsave('%d.png' % i, img)
+        print(np.average(img[..., :1]))
+        misc.imsave('%d.png' % i, img.astype(np.uint8), 'png')
         i += 1
 
 
 def test1():
     input_shape = [None, 176, 608, 3]
-    num_classes = 11
+    num_classes = 6
 
     dr = DataReader('data/', (352, 1216, 3))
     x = dr.get_image_data()
     y = dr.get_image_labels()
+    func = np.vectorize(original_to_label)
+    y = func(y)
     n, _, _, _ = x.shape
     batch_size = 30
     iterations = 2500
 
     model = GenSeg(input_shape=input_shape, num_classes=num_classes)
-    atexit.register(model.save_model)  # In case of ctrl-C
-    averages = []
+    #atexit.register(model.save_model)  # In case of ctrl-C
     for iteration in range(iterations):
         idxs = np.random.permutation(n)[:batch_size]
-        batch_data = x[idxs,:,:,:]
-        batch_labels = y[idxs,:,:]
+        batch_data = x[idxs, :, :, :]
+        batch_labels = y[idxs, :, :]
         print(iteration, model.train(
             x_train=batch_data, y_train=batch_labels,
             num_epochs=1, start_stop_info=False, progress_info=False

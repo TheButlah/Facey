@@ -183,6 +183,41 @@ class DataReader(object):
             k += 1
         return label_data
 
+
+def original_to_label(original):
+    return {
+        3: 1,  # road
+        5: 2,  # sidewalk
+        6: 3,  # car
+        7: 4,  # pedestrian
+        8: 5  # cyclist
+    }.get(original, 0)  # unkown
+
+
+def label_to_original(label):
+    return {
+        1: 3,  # road
+        2: 5,  # sidewalk
+        3: 6,  # car
+        4: 7,  # pedestrian
+        5: 8  # cyclist
+    }.get(label, 0)
+
+
+def get_color(original):  # function to map ints to RGB array
+    return {
+        1: [153, 0, 0],  # building
+        2: [0, 51, 102],  # sky
+        3: [160, 160, 160],  # road
+        4: [0, 102, 0],  # vegetation
+        5: [255, 228, 196],  # sidewalk
+        6: [255, 200, 50],  # car
+        7: [255, 153, 255],  # pedestrian
+        8: [204, 153, 255],  # cyclist
+        9: [130, 255, 255],  # signage
+        10: [193, 120, 87],  # fence
+    }.get(original, [255, 255, 255])  # Unknown
+
 # dr = DataReader('/home/vdd6/Desktop/gen_seg_data', (374, 1238, 3))
 # res = dr.get_image_data()
 # res = dr.get_image_labels()
