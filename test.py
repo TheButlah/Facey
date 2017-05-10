@@ -52,7 +52,7 @@ def test1():
     iterations = 2500
 
     model = GenSeg(input_shape=input_shape, num_classes=num_classes)
-    #atexit.register(model.save_model)  # In case of ctrl-C
+    atexit.register(model.save_model)  # In case of ctrl-C
     for iteration in range(iterations):
         idxs = np.random.permutation(n)[:batch_size]
         batch_data = x[idxs, :, :, :]
