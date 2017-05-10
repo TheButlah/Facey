@@ -4,11 +4,15 @@ import atexit
 from util import DataReader, original_to_label, label_to_original, get_color
 from scipy import misc, io
 import matplotlib.pyplot as plt
-
+import sys
 
 
 def main():
-    test1('saved/Long7-1.ckpt')
+    number = int(sys.argv[1])
+    name = 'saved/Long7-1.ckpt'
+    if number is 2: test2(name)
+    elif number is 3: test3(name)
+    else: test1(name)
 
 
 def test3(name):
@@ -50,18 +54,18 @@ def test2(name):
     for f in filenames:
         image = misc.imread(f)
         image_data[i, :, :, :] = image[:h*2:2, :w*2:2, :]
-        plt.figure()
-        plt.imshow(image_data[i])
+        '''plt.figure()
+        plt.imshow(image_data[i])'''
         i += 1
 
     model = GenSeg(input_shape=[None, h, w, c], num_classes=num_classes, load_model=name)
     result = model.apply(image_data)
     result = np.argmax(result, axis=-1)
 
-    for img in result:
+    '''for img in result:
         plt.figure()
         plt.imshow(img.astype(np.uint8))
-        plt.show()
+        plt.show()'''
 
     colored = np.empty(shape)
 
@@ -72,9 +76,9 @@ def test2(name):
     for img in colored:
         img = img.astype(np.uint8, copy=False)
         misc.imsave('%d.png' % i, img, 'png')
-        plt.figure()
+        '''plt.figure()
         plt.imshow(img)
-        plt.show()
+        plt.show()'''
         i += 1
 
 
@@ -91,7 +95,7 @@ def test1(name):
     batch_size = 30
     iterations = 9500
 
-    model = GenSeg(input_shape=input_shape, num_classes=num_classes)
+    model = GenSeg(input_shape=input_shape, num_classes=num_classes, load_model=name)
     atexit.register(model.save_model, name)  # In case of ctrl-C
     for iteration in range(iterations):
         idxs = np.random.permutation(n)[:batch_size]
