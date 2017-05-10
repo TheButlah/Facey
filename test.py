@@ -3,13 +3,43 @@ from model import GenSeg
 import atexit
 from util import DataReader, original_to_label, label_to_original, get_color
 from scipy import misc, io
+import matplotlib.pyplot as plt
+
 
 
 def main():
-    test1()
+    test2('saved/Long7.ckpt')
 
 
-def test2():
+def test3(name):
+    input_shape = [None, 176, 608, 3]
+    num_classes = 6
+
+    dr = DataReader('data/', (352, 1216, 3))
+    x = dr.get_image_data()
+    y = dr.get_image_labels()
+    func = np.vectorize(original_to_label)
+    y = func(y)
+    n, _, _, _ = x.shape
+    batch_size = 30
+
+    model = GenSeg(input_shape=input_shape, num_classes=num_classes, load_model=name)
+
+    average = 0
+    count = 0
+    for i in range(0,n,batch_size):
+        batch_data = x[i:i+batch_size, :, :, :]
+        batch_labels = y[i:i+batch_size, :, :]
+        results = model.apply(batch_data)
+        results = np.argmax(results, axis=-1)
+        results = np.equal(results, batch_labels)
+        results = np.average(results.astype(dtype=np.float32))
+        average += results
+        count += 1
+    print(average/count)
+
+
+def test2(name):
     num_classes = 6
     filenames = ['data/image_data/testing/0000/000040.png']
     shape = (len(filenames), 176, 608, 3)
@@ -20,9 +50,11 @@ def test2():
     for f in filenames:
         image = misc.imread(f)
         image_data[i, :, :, :] = image[:h*2:2, :w*2:2, :]
+        plt.figure()
+        plt.imshow(image_data[i])
         i += 1
 
-    model = GenSeg(input_shape=[None, h, w, c], num_classes=num_classes, load_model='saved/Long7.ckpt')
+    model = GenSeg(input_shape=[None, h, w, c], num_classes=num_classes, load_model=name)
     result = model.apply(image_data)
     result = np.argmax(result, axis=-1)
 
@@ -33,12 +65,11 @@ def test2():
 
     i = 0
     for img in colored:
-        print(np.average(img[..., :1]))
         misc.imsave('%d.png' % i, img.astype(np.uint8), 'png')
         i += 1
 
 
-def test1():
+def test1(name):
     input_shape = [None, 176, 608, 3]
     num_classes = 6
 
@@ -51,8 +82,8 @@ def test1():
     batch_size = 30
     iterations = 9500
 
-    model = GenSeg(input_shape=input_shape, num_classes=num_classes)
-    atexit.register(model.save_model)  # In case of ctrl-C
+    model = GenSeg(input_shape=input_shape, num_classes=num_classes, load_model=name)
+    atexit.register(model.save_model, name)  # In case of ctrl-C
     for iteration in range(iterations):
         idxs = np.random.permutation(n)[:batch_size]
         batch_data = x[idxs, :, :, :]
@@ -80,4 +111,5 @@ def test1():
 
 if __name__ == "__main__":
     main()
+
 

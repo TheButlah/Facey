@@ -216,7 +216,7 @@ def get_color(original):  # function to map ints to RGB array
         8: [204, 153, 255],  # cyclist
         9: [130, 255, 255],  # signage
         10: [193, 120, 87],  # fence
-    }.get(original, [255, 255, 255])  # Unknown
+    }.get(original, [0, 0, 0])  # Unknown
 
 # dr = DataReader('/home/vdd6/Desktop/gen_seg_data', (374, 1238, 3))
 # res = dr.get_image_data()

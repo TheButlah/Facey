@@ -1,2 +1,2 @@
-model_checkpoint_path: "/home/vdd6/Desktop/GenSeg/saved/Calios.ckpt"
-all_model_checkpoint_paths: "/home/vdd6/Desktop/GenSeg/saved/Calios.ckpt"
+model_checkpoint_path: "/home/rjb392/Programming/GenSeg/saved/Long7.ckpt"
+all_model_checkpoint_paths: "/home/rjb392/Programming/GenSeg/saved/Long7.ckpt"
