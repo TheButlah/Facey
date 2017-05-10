@@ -107,6 +107,7 @@ class GenSeg:
                 self._saver = tf.train.Saver()
                 if load_model is not None:
                     print("Restoring Model...")
+                    load_model = os.path.abspath(load_model)
                     self._saver.restore(self._sess, load_model)
                     print("Model Restored!")
                 else:
@@ -189,5 +190,6 @@ class GenSeg:
             dirname = os.path.dirname(save_path)
             if dirname is not '':
                 os.makedirs(dirname, exist_ok=True)
+            save_path = os.path.abspath(save_path)
             path = self._saver.save(self._sess, save_path)
             print("Model successfully saved in file: %s" % path)
