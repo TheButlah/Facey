@@ -11,7 +11,7 @@ from skimage.color import lab2rgb
 
 def main():
     number = int(sys.argv[1])
-    name = 'saved/Long7-1.ckpt'
+    name = 'saved/Long7-Lab.ckpt'
     if number is 2: test2(name)
     elif number is 3: test3(name)
     else: test1(name)
@@ -48,8 +48,11 @@ def test3(name):
 def test2(name):
     num_classes = 6
     filenames = [
+        'data/image_data/testing/0000/000000.png',
         'data/image_data/testing/0000/000040.png',
-        'data/image_data/testing/0005/000020.png'
+        'data/image_data/testing/0004/000000.png',
+        'data/image_data/testing/0005/000020.png',
+        'data/image_data/testing/0005/000240.png'
     ]
     shape = (len(filenames), 176, 608, 3)
     n, h, w, c = shape
