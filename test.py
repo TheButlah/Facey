@@ -6,7 +6,8 @@ import atexit
 from model import GenSeg
 from util import DataReader, original_to_label, label_to_original, get_color, normalize_img
 from scipy import misc, io
-from skimage.color import lab2rgb
+from skimage.color import lab2rgb, rgb2lab
+from skimage.exposure import equalize_adapthist
 
 
 def main():
@@ -56,7 +57,7 @@ def test2(name):
     ]
     shape = (len(filenames), 176, 608, 3)
     n, h, w, c = shape
-    image_data = np.zeros((n, h, w, c), dtype=np.uint8)
+    image_data = np.zeros((n, h, w, c))
 
     i = 0
     for f in filenames:
@@ -65,7 +66,7 @@ def test2(name):
         '''plt.figure()
         plt.imshow(image_data[i])
         plt.figure()
-        plt.imshow(lab2rgb(normalize_img(image_data[i])))
+        plt.imshow(lab2rgb(image_data[i]))
         plt.show()'''
         i += 1
 
@@ -76,7 +77,7 @@ def test2(name):
     '''for img in result:
         plt.figure()
         plt.imshow(img.astype(np.uint8))
-        plt.show()'''
+    plt.show()'''
 
     colored = np.empty(shape)
 

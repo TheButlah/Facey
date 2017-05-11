@@ -1,9 +1,10 @@
 import tensorflow as tf
 import numpy as np
 import os
+
 from scipy import misc, io
 from skimage.exposure import equalize_adapthist
-from skimage.color import rgb2lab
+from skimage.color import rgb2lab, lab2rgb
 
 
 def batch_norm(x, shape, phase_train, scope='BN'):
@@ -166,7 +167,7 @@ class DataReader(object):
     def get_image_data(self):
         h, w, c = self._image_shape
         shape = (len(self._image_labels), h // 2, w // 2, c)
-        image_data = np.zeros(shape)
+        image_data = np.empty(shape)
         k = 0
         for filename in self._image_data:
             image = normalize_img(misc.imread(filename))  # Fix brightness and convert to lab colorspace
@@ -177,7 +178,7 @@ class DataReader(object):
     def get_image_labels(self):
         h, w, _ = self._image_shape
         shape = (len(self._image_labels), h // 2, w // 2)
-        label_data = np.zeros(shape)
+        label_data = np.empty(shape)
         k = 0
         for filename in self._image_labels:
             label = io.loadmat(filename)
@@ -223,7 +224,10 @@ def get_color(original):  # function to map ints to RGB array
 
 
 def normalize_img(img):
-    return rgb2lab(equalize_adapthist(img))
+    hist = equalize_adapthist(img) * 255  # equalize_adapthist turns into floats from [0,1]
+    hist = hist.astype(np.uint8, copy=False)
+    lab = rgb2lab(hist)
+    return lab
 
 # dr = DataReader('/home/vdd6/Desktop/gen_seg_data', (374, 1238, 3))
 # res = dr.get_image_data()
