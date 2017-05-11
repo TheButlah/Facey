@@ -12,7 +12,7 @@ from skimage.exposure import equalize_adapthist
 
 def main():
     number = int(sys.argv[1])
-    name = 'saved/Long7-Lab.ckpt'
+    name = 'saved/Long7-Lab-Fixed.ckpt'
     if number is 2: test2(name)
     elif number is 3: test3(name)
     else: test1(name)
@@ -107,7 +107,7 @@ def test1(name):
     batch_size = 30
     iterations = sys.maxsize
 
-    model = GenSeg(input_shape=input_shape, num_classes=num_classes, load_model=name)
+    model = GenSeg(input_shape=input_shape, num_classes=num_classes, load_model=True)
     atexit.register(model.save_model, name)  # In case of ctrl-C
     for iteration in range(iterations):
         idxs = np.random.permutation(n)[:batch_size]
