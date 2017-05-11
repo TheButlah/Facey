@@ -104,7 +104,7 @@ def test1(name):
     y = func(y)
     n, _, _, _ = x.shape
     batch_size = 30
-    iterations = 9500
+    iterations = sys.maxsize
 
     model = GenSeg(input_shape=input_shape, num_classes=num_classes, load_model=name)
     atexit.register(model.save_model, name)  # In case of ctrl-C
