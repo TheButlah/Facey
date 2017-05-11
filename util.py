@@ -2,6 +2,8 @@ import tensorflow as tf
 import numpy as np
 import os
 from scipy import misc, io
+from skimage.exposure import equalize_adapthist
+from skimage.color import rgb2lab
 
 
 def batch_norm(x, shape, phase_train, scope='BN'):
@@ -139,6 +141,7 @@ def gen_occupancy_grid(x, lower_left, upper_right, divisions):
             output[row[0], row[1], row[2]] = 1
     return output
 
+
 class DataReader(object):
     def __init__(self, path, image_shape):
         self._image_shape = image_shape
@@ -166,8 +169,8 @@ class DataReader(object):
         image_data = np.zeros(shape)
         k = 0
         for filename in self._image_data:
-            image = misc.imread(filename)
-            image_data[k,:,:,:] = image[0:h:2,0:w:2,0:c]
+            image = normalize_img(misc.imread(filename))  # Fix brightness and convert to lab colorspace
+            image_data[k, :, :, :] = image[0:h:2, 0:w:2, 0:c]
             k += 1
         return image_data
 
@@ -179,7 +182,7 @@ class DataReader(object):
         for filename in self._image_labels:
             label = io.loadmat(filename)
             label = label['truth']
-            label_data[k,:,:] = label[0:h:2,0:w:2]
+            label_data[k, :, :] = label[0:h:2, 0:w:2]
             k += 1
         return label_data
 
@@ -217,6 +220,10 @@ def get_color(original):  # function to map ints to RGB array
         9: [130, 255, 255],  # signage
         10: [193, 120, 87],  # fence
     }.get(original, [0, 0, 0])  # Unknown
+
+
+def normalize_img(img):
+    return rgb2lab(equalize_adapthist(img))
 
 # dr = DataReader('/home/vdd6/Desktop/gen_seg_data', (374, 1238, 3))
 # res = dr.get_image_data()

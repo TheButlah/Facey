@@ -1,10 +1,12 @@
 import numpy as np
-from model import GenSeg
-import atexit
-from util import DataReader, original_to_label, label_to_original, get_color
-from scipy import misc, io
 import matplotlib.pyplot as plt
 import sys
+import atexit
+
+from model import GenSeg
+from util import DataReader, original_to_label, label_to_original, get_color, normalize_img
+from scipy import misc, io
+from skimage.color import lab2rgb
 
 
 def main():
@@ -45,17 +47,23 @@ def test3(name):
 
 def test2(name):
     num_classes = 6
-    filenames = ['data/image_data/testing/0000/000040.png']
+    filenames = [
+        'data/image_data/testing/0000/000040.png',
+        'data/image_data/testing/0005/000020.png'
+    ]
     shape = (len(filenames), 176, 608, 3)
     n, h, w, c = shape
     image_data = np.zeros((n, h, w, c), dtype=np.uint8)
 
     i = 0
     for f in filenames:
-        image = misc.imread(f)
+        image = normalize_img(misc.imread(f))  # Fix brightness and convert to lab colorspace
         image_data[i, :, :, :] = image[:h*2:2, :w*2:2, :]
         '''plt.figure()
-        plt.imshow(image_data[i])'''
+        plt.imshow(image_data[i])
+        plt.figure()
+        plt.imshow(lab2rgb(normalize_img(image_data[i])))
+        plt.show()'''
         i += 1
 
     model = GenSeg(input_shape=[None, h, w, c], num_classes=num_classes, load_model=name)
