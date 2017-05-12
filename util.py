@@ -144,8 +144,11 @@ def gen_occupancy_grid(x, lower_left, upper_right, divisions):
 
 
 class DataReader(object):
-    def __init__(self, path, image_shape):
+    def __init__(self, path, image_shape, lower_left, upper_right, divisions):
         self._image_shape = image_shape
+        self._lower_left = lower_left
+        self._upper_right = upper_right
+        self._divisions = divisions
         self._path = os.path.abspath(path)
         self._image_data = self.get_filenames(path + '/image_data/training/')
         self._image_labels = self.get_filenames(path + '/image_labels/training/')
@@ -187,6 +190,28 @@ class DataReader(object):
             k += 1
         return label_data
 
+    def get_velodyne_data(self):
+        velo_data = np.empty(self._divisions)
+        k = 0
+        for filename in self._velodyne_data:
+            velo = np.fromfile(filename)
+            velo = np.reshape(velo, [-1, 4])
+            velo = np.transpose(velo)
+            velo = gen_occupancy_grid(velo, self._lower_left, self._upper_right, self._divisions)
+            velo_data[k, :, :, :] = velo
+            k += 1
+        return velo_data
+
+    def get_velodyne_labels(self):
+        label_data = np.empty(self._divisions)
+        k = 0
+        for filename in self._velodyne_labels:
+            velo = io.loadmat(filename)
+            velo = velo['truth']
+            velo = gen_occupancy_grid(velo, self._lower_left, self._upper_right, self._divisions)
+            label_data[k, :, :, :] = velo
+            k += 1
+        return label_data
 
 def original_to_label(original):
     return {
