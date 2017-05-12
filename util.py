@@ -220,7 +220,7 @@ class DataReader(object):
         shape = np.insert(shape, 0, len(self._velodyne_data))
         velo_data = np.empty(shape)
         k = 0
-        for filename in self._velodyne_data:
+        for filename in self._velodyne_data[:1]:
             velo = np.fromfile(filename, dtype='float32')
             velo = np.reshape(velo, [-1, 4])
             #velo = np.reshape(velo, [4, -1])
@@ -292,6 +292,16 @@ def normalize_img(img):
     hist = hist.astype(np.uint8, copy=False)
     lab = rgb2lab(hist)
     return lab
+
+
+def index_to_real(coord, ll, ur, divisions):
+    interval = (ur-ll)/divisions
+    return coord*interval+ll
+
+
+def real_to_index(coord, ll, ur, divisions):
+    interval = (ur-ll)/divisions
+    return np.floor_divide((coord - ll), interval)
 
 # dr = DataReader('/home/vdd6/Desktop/gen_seg_data', (374, 1238, 3))
 # res = dr.get_image_data()
