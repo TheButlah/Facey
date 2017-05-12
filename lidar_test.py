@@ -50,18 +50,18 @@ def test4():
     velo_hits = np.empty((3, 1))
     velo_totals = np.empty((3, 1))
     for i in range(n):
-    print(i,'velo')
+        print(i,'velo')
     velo_pred = np.argmax(velo_segmenter.apply(x_velo[i, :, :, :, :]), axis=-1)
-        velo_true = y_velo_true[i, :, :, :]
-        for j in range(3, 6):
-            hit_pred = velo_pred == j
-            hit_true = velo_true == j
-            velo_hits += np.sum(hit_true)
-            velo_totals += np.sum(np.logical_and(hit_pred, hit_true))
+    velo_true = y_velo_true[i, :, :, :]
+    for j in range(3, 6):
+        hit_pred = velo_pred == j
+        hit_true = velo_true == j
+        velo_hits += np.sum(hit_true)
+        velo_totals += np.sum(np.logical_and(hit_pred, hit_true))
     velo_rates = velo_hits / velo_totals
 
-    for rate in image_rate: print(rate)
-    for rate in velo_rate: print(rate)
+    for rate in image_rates: print(rate)
+    for rate in velo_rates: print(rate)
 
 
 def test3(name):
