@@ -129,7 +129,7 @@ def nearest_neighbor_3d(x):
 
 
 def gen_occupancy_grid(x, lower_left, upper_right, divisions):
-    output = np.zeros(divisions)
+    output = np.zeros(np.append(divisions, 1))
     lengths = upper_right - lower_left
     intervals = lengths / divisions
     offsets = x - lower_left
@@ -139,16 +139,44 @@ def gen_occupancy_grid(x, lower_left, upper_right, divisions):
     for row in indices:
         print(row)
         if np.sum(row >= np.zeros([1, 3])) == 3 and np.sum(row < divisions) == 3:
-            output[row[0], row[1], row[2]] = 1
+            output[row[0], row[1], row[2], 0] = 1
+    return output
+
+def gen_label_occupancy_grid(x, lower_left, upper_right, divisions, num_classes):
+    output = np.zeros(np.append(divisions, num_classes))
+    lengths = upper_right - lower_left
+    intervals = lengths / divisions
+    offsets = x - lower_left
+    indices = np.floor(offsets / intervals)
+    indices = indices.astype(int)
+    print(indices)
+    for row in indices:
+        print(row)
+        if np.sum(row[:3] >= np.zeros([1, 3])) == 3 and np.sum(row[:3] < divisions) == 3:
+            output[row[0], row[1], row[2], row[3]] += 1
+    output = np.argmax(output, -1)
     return output
 
 
+def image_to_angles(x, y):
+    theta = -np.arctan2(y, x)
+    phi = np.arctan2(z, x)
+    return theta, phi
+
+
+def velodyne_to_angles(x, y, z):
+    theta = (x - 304)*4/np.pi
+    phi = (88 - y)*4/np.pi
+    return theta, phi
+
+
 class DataReader(object):
-    def __init__(self, path, image_shape, lower_left, upper_right, divisions):
+    def __init__(self, path, image_shape, lower_left, upper_right, divisions, num_classes):
         self._image_shape = image_shape
         self._lower_left = lower_left
         self._upper_right = upper_right
         self._divisions = divisions
+        self._num_classes = num_classes
         self._path = os.path.abspath(path)
         self._image_data = self.get_filenames(path + '/image_data/training/')
         self._image_labels = self.get_filenames(path + '/image_labels/training/')
@@ -197,18 +225,24 @@ class DataReader(object):
             velo = np.fromfile(filename)
             velo = np.reshape(velo, [-1, 4])
             velo = np.transpose(velo)
+            velo = velo[:, 0:3]
             velo = gen_occupancy_grid(velo, self._lower_left, self._upper_right, self._divisions)
-            velo_data[k, :, :, :] = velo
+            velo_data[k, :, :, :, :] = velo
             k += 1
         return velo_data
 
     def get_velodyne_labels(self):
         label_data = np.empty(self._divisions)
         k = 0
-        for filename in self._velodyne_labels:
-            velo = io.loadmat(filename)
-            velo = velo['truth']
-            velo = gen_occupancy_grid(velo, self._lower_left, self._upper_right, self._divisions)
+        for (data_filename, label_filename) in zip(self._velodyne_data, self._velodyne_labels):
+            velo = np.fromfile(data_filename)
+            velo = np.reshape(velo, [-1, 4])
+            velo = np.transpose(velo)
+            velo = velo[:, 0:3]
+            label = io.loadmat(label_filename)
+            label = label['truth']
+            velo = np.concatenate([velo, label], 1)
+            velo = gen_label_occupancy_grid(velo, self._lower_left, self._upper_right, self._divisions, self._num_classes)
             label_data[k, :, :, :] = velo
             k += 1
         return label_data
