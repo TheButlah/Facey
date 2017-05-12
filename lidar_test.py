@@ -22,12 +22,11 @@ def main():
     if number is 2: test2(name)
     elif number is 3: test3(name)
     elif number is 4: test4()
-    elif number is 6: test6()
+    elif number is 5: test5()
     else: test1(name)
 
 
-
-def test6():
+def test5():
     image_segmenter = GenSeg(input_shape=[None, 176, 608, 3], num_classes=num_classes, load_model='saved/Long7-Lab-Fixed.ckpt')
     dr = DataReader(*datareader_params)
     images = dr.get_image_data()[:1, :, :, :]

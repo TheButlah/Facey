@@ -214,6 +214,10 @@ class DataReader(object):
     def get_image_labels(self):
         h, w, _ = self._image_shape
         shape = (len(self._image_labels), h // 2, w // 2)
+        img_labels_loc = 'processed/img_labels.npy'
+        if os.path.exists(img_labels_loc):
+            label_data = np.load(img_labels_loc)
+            return label_data
         label_data = np.empty(shape)
         k = 0
         for filename in self._image_labels:
@@ -221,6 +225,8 @@ class DataReader(object):
             label = label['truth']
             label_data[k, :, :] = label[0:h:2, 0:w:2]
             k += 1
+        Path(os.path.dirname(img_labels_loc)).mkdir(exist_ok=True)
+        np.save(img_labels_loc, label_data)
         return label_data
 
     def get_velodyne_data(self):
@@ -248,6 +254,10 @@ class DataReader(object):
 
     def get_velodyne_labels(self):
         shape = np.insert(self._divisions, 0, len(self._velodyne_data))
+        vel_labels_loc = 'processed/vel_labels.npy'
+        if os.path.exists(vel_labels_loc):
+            label_data = np.load(vel_labels_loc)
+            return label_data
         label_data = np.empty(shape)
         k = 0
         for (data_filename, label_filename) in zip(self._velodyne_data, self._velodyne_labels):
@@ -263,6 +273,8 @@ class DataReader(object):
             label_data[k, :, :, :] = velo
             k += 1
             print(k)
+        Path(os.path.dirname(vel_labels_loc)).mkdir(exist_ok=True)
+        np.save(vel_labels_loc, label_data)
         return label_data
 
 
