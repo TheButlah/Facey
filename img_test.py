@@ -17,9 +17,10 @@ def main():
     name = 'saved/Long7-Lab-Fixed.ckpt'
     if number is 2: test2(name)
     elif number is 3: test3(name)
+    elif number is 4: test4(name)
     else: test1(name)
 
-'''
+
 def test4(name):
     input_shape = [None, 176, 608, 3]
 
@@ -42,13 +43,13 @@ def test4(name):
         results = model.apply(batch_data)
         results = np.argmax(results, axis=-1)
 
-    colored = np.empty(input_shape)
+    colored = np.empty(input_shape[1:])
 
     for (i, x, y), value in np.ndenumerate(results):
-        colored[i, x, y] = get_color(label_to_original(value))
+        colored[i, x, y] = list(get_color(label_to_original(value)))
         out.write(colored[i, x, y])
 
-    out.release()'''
+    out.release()
 
 
 def test3(name):
@@ -113,7 +114,7 @@ def test2(name):
     colored = np.empty(shape)
 
     for (i, x, y), value in np.ndenumerate(result):
-        colored[i, x, y] = get_color(label_to_original(value))
+        colored[i, x, y] = get_color(list(label_to_original(value)))
 
     i = 0
     for img in colored:

@@ -22,12 +22,12 @@ def main():
     if number is 2: test2(name)
     elif number is 3: test3(name)
     elif number is 4: test4()
-    elif number is 5: test5()
+    elif number is 5: test5(name)
     else: test1(name)
 
 
-def test5():
-    image_segmenter = GenSeg(input_shape=[None, 176, 608, 3], num_classes=num_classes, load_model='saved/Long7-Lab-Fixed.ckpt')
+def test5(name):
+    image_segmenter = GenSeg(input_shape=[None, 176, 608, 3], num_classes=num_classes, load_model=name)
     dr = DataReader(*datareader_params)
     images = dr.get_image_data()[:1, :, :, :]
     image_preds = image_segmenter.apply(images)
@@ -106,14 +106,18 @@ def test3(name):
 
 def test2(name):
     dr = DataReader(*datareader_params)
+    print()
     x = dr.get_velodyne_data()
     y = dr.get_velodyne_labels()
     func = np.vectorize(original_to_label)
     y = func(y)
     datapoint = y[0, :, :, :]
-    datapoint = np.argwhere(datapoint==3)
+    datapoint = np.argwhere(datapoint==1)
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
+    #ax.set_autoscale_on(False)
+    #ax.autoscale(False)
+    #plt.axis('equal')
     ax.scatter(datapoint[:, 0], datapoint[:, 1], datapoint[:, 2])
     plt.show()
 
