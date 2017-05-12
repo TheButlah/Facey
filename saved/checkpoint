@@ -1,2 +1,2 @@
-model_checkpoint_path: "/home/rjb392/Programming/GenSeg/saved/Long7-Lab-Fixed.ckpt"
-all_model_checkpoint_paths: "/home/rjb392/Programming/GenSeg/saved/Long7-Lab-Fixed.ckpt"
+model_checkpoint_path: "/home/rjb392/Programming/GenSeg/saved/lidar.ckpt"
+all_model_checkpoint_paths: "/home/rjb392/Programming/GenSeg/saved/lidar.ckpt"
