@@ -2,7 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sys
 import atexit
-import cv2
 
 from model import GenSeg
 from util import DataReader, original_to_label, label_to_original, get_color, normalize_img
@@ -39,7 +38,7 @@ def test4(name):
     #fourcc = cv2.VideoWriter_fourcc(*'MJPG')
     #out = cv2.VideoWriter('out.avi', fourcc, 20.0, tuple(input_shape[1:-1]))
 
-    fig = None
+    f = None
     for i in range(0, n, batch_size):
         batch_data = x[i:i + batch_size, :, :, :]
         batch_labels = y[i:i + batch_size, :, :]
@@ -49,11 +48,11 @@ def test4(name):
             colored = np.empty(input_shape[1:], dtype=np.uint8)
             for (idx, idy), value in np.ndenumerate(img):
                 colored[idx, idy, :] = get_color(label_to_original(value))
-            if fig is None:
-                fig = plt.imshow(colored)
+            if f is None:
+                f = np.imshow(colored)
             else:
-                fig.set_data(colored)
-            #plt.pause(.1)
+                f.set_data(colored)
+            plt.pause(.05)
             plt.draw()
             #out.write(colored.transpose().astype(np.uint8))
 
