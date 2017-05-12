@@ -135,23 +135,20 @@ def gen_occupancy_grid(x, lower_left, upper_right, divisions):
     offsets = x - lower_left
     indices = np.floor(offsets / intervals)
     indices = indices.astype(int)
-    print(indices)
     for row in indices:
-        print(row)
         if np.sum(row >= np.zeros([1, 3])) == 3 and np.sum(row < divisions) == 3:
             output[row[0], row[1], row[2], 0] = 1
     return output
+
 
 def gen_label_occupancy_grid(x, lower_left, upper_right, divisions, num_classes):
     output = np.zeros(np.append(divisions, num_classes))
     lengths = upper_right - lower_left
     intervals = lengths / divisions
-    offsets = x - lower_left
-    indices = np.floor(offsets / intervals)
+    offsets = x - np.append(lower_left, 0)
+    indices = np.floor(offsets / np.append(intervals, 1))
     indices = indices.astype(int)
-    print(indices)
     for row in indices:
-        print(row)
         if np.sum(row[:3] >= np.zeros([1, 3])) == 3 and np.sum(row[:3] < divisions) == 3:
             output[row[0], row[1], row[2], original_to_label(row[3])] += 1
     output = np.argmax(output, -1)
@@ -219,24 +216,28 @@ class DataReader(object):
         return label_data
 
     def get_velodyne_data(self):
-        velo_data = np.empty(self._divisions)
+        shape = np.append(self._divisions, 1)
+        shape = np.insert(shape, 0, len(self._velodyne_data))
+        velo_data = np.empty(shape)
         k = 0
         for filename in self._velodyne_data:
-            velo = np.fromfile(filename)
-            velo = np.reshape(velo, [-1, 4])
+            velo = np.fromfile(filename, dtype='float32')
+            velo = np.reshape(velo, [4, -1])
             velo = np.transpose(velo)
             velo = velo[:, 0:3]
             velo = gen_occupancy_grid(velo, self._lower_left, self._upper_right, self._divisions)
             velo_data[k, :, :, :, :] = velo
             k += 1
+            print(k)
         return velo_data
 
     def get_velodyne_labels(self):
-        label_data = np.empty(self._divisions)
+        shape = np.insert(self._divisions, 0, len(self._velodyne_data))
+        label_data = np.empty(shape)
         k = 0
         for (data_filename, label_filename) in zip(self._velodyne_data, self._velodyne_labels):
-            velo = np.fromfile(data_filename)
-            velo = np.reshape(velo, [-1, 4])
+            velo = np.fromfile(data_filename, dtype='float32')
+            velo = np.reshape(velo, [4, -1])
             velo = np.transpose(velo)
             velo = velo[:, 0:3]
             label = io.loadmat(label_filename)
@@ -245,6 +246,7 @@ class DataReader(object):
             velo = gen_label_occupancy_grid(velo, self._lower_left, self._upper_right, self._divisions, self._num_classes)
             label_data[k, :, :, :] = velo
             k += 1
+            print(k)
         return label_data
 
 def original_to_label(original):

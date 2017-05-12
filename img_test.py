@@ -2,12 +2,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sys
 import atexit
+import cv2
 
 from model import GenSeg
 from util import DataReader, original_to_label, label_to_original, get_color, normalize_img
-from scipy import misc, io
-from skimage.color import lab2rgb, rgb2lab
-from skimage.exposure import equalize_adapthist
+from scipy.misc import imread, imsave
+
+num_classes = 6
+datareader_params = ('data/', (352, 1216, 3), np.array([0, -32, -16]), np.array([64, 32, 16]), np.array([64, 64, 64]), num_classes)
 
 
 def main():
@@ -17,12 +19,42 @@ def main():
     elif number is 3: test3(name)
     else: test1(name)
 
+'''
+def test4(name):
+    input_shape = [None, 176, 608, 3]
+
+    dr = DataReader(*datareader_params)
+    x = dr.get_image_data()
+    y = dr.get_image_labels()
+    func = np.vectorize(original_to_label)
+    y = func(y)
+    n, _, _, _ = x.shape
+    batch_size = 30
+
+    model = GenSeg(input_shape=input_shape, num_classes=num_classes, load_model=name)
+
+    fourcc = cv2.VideoWriter_fourcc('M', 'J', 'P', 'G')
+    out = cv2.VideoWriter('out.avi', fourcc, 20.0, tuple(input_shape[1:-1]))
+
+    for i in range(0, n, batch_size):
+        batch_data = x[i:i + batch_size, :, :, :]
+        batch_labels = y[i:i + batch_size, :, :]
+        results = model.apply(batch_data)
+        results = np.argmax(results, axis=-1)
+
+    colored = np.empty(input_shape)
+
+    for (i, x, y), value in np.ndenumerate(results):
+        colored[i, x, y] = get_color(label_to_original(value))
+        out.write(colored[i, x, y])
+
+    out.release()'''
+
 
 def test3(name):
     input_shape = [None, 176, 608, 3]
-    num_classes = 6
 
-    dr = DataReader('data/', (352, 1216, 3))
+    dr = DataReader(*datareader_params)
     x = dr.get_image_data()
     y = dr.get_image_labels()
     func = np.vectorize(original_to_label)
@@ -47,7 +79,6 @@ def test3(name):
 
 
 def test2(name):
-    num_classes = 6
     filenames = [
         'data/image_data/testing/0000/000000.png',
         'data/image_data/testing/0000/000040.png',
@@ -61,7 +92,7 @@ def test2(name):
 
     i = 0
     for f in filenames:
-        image = normalize_img(misc.imread(f))  # Fix brightness and convert to lab colorspace
+        image = normalize_img(imread(f))  # Fix brightness and convert to lab colorspace
         image_data[i, :, :, :] = image[:h*2:2, :w*2:2, :]
         '''plt.figure()
         plt.imshow(image_data[i])
@@ -87,7 +118,7 @@ def test2(name):
     i = 0
     for img in colored:
         img = img.astype(np.uint8, copy=False)
-        misc.imsave('%d.png' % i, img, 'png')
+        imsave('%d.png' % i, img, 'png')
         '''plt.figure()
         plt.imshow(img)
         plt.show()'''
@@ -96,9 +127,8 @@ def test2(name):
 
 def test1(name):
     input_shape = [None, 176, 608, 3]
-    num_classes = 6
 
-    dr = DataReader('data/', (352, 1216, 3))
+    dr = DataReader(*datareader_params)
     x = dr.get_image_data()
     y = dr.get_image_labels()
     func = np.vectorize(original_to_label)
@@ -117,21 +147,6 @@ def test1(name):
             x_train=batch_data, y_train=batch_labels,
             num_epochs=1, start_stop_info=False, progress_info=False
         ))
-    # average = 0
-    # for k in range(n):
-    #     idxs = np.array([k])
-    #     batch_data = x[idxs,:,:,:]
-    #     batch_labels = y[idxs,:,:]
-    #     print(batch_data.shape)
-    #     print(batch_labels.shape)
-    #     result = model.apply(x)
-    #     result = np.argmax(result, axis=-1)
-    #     result = np.equal(result, y)
-    #     result = np.average(result.astype(dtype=np.float32))
-    #     average += result
-    # average /= n
-    # print("Average: ", average)
-    # model.save_model()
 
 
 if __name__ == "__main__":
