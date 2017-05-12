@@ -7,6 +7,7 @@ import cv2
 from model import GenSeg
 from util import DataReader, original_to_label, label_to_original, get_color, normalize_img
 from scipy.misc import imread, imsave
+from pylab import rcParams
 
 num_classes = 6
 datareader_params = ('data/', (352, 1216, 3), np.array([0, -32, -16]), np.array([64, 32, 16]), np.array([64, 64, 64]), num_classes)
@@ -22,6 +23,7 @@ def main():
 
 
 def test4(name):
+    rcParams['figure.figsize'] = 40, 15
     input_shape = [None, 176, 608, 3]
 
     dr = DataReader(*datareader_params)
@@ -34,22 +36,28 @@ def test4(name):
 
     model = GenSeg(input_shape=input_shape, num_classes=num_classes, load_model=name)
 
-    fourcc = cv2.VideoWriter_fourcc('M', 'J', 'P', 'G')
-    out = cv2.VideoWriter('out.avi', fourcc, 20.0, tuple(input_shape[1:-1]))
+    #fourcc = cv2.VideoWriter_fourcc(*'MJPG')
+    #out = cv2.VideoWriter('out.avi', fourcc, 20.0, tuple(input_shape[1:-1]))
 
+    fig = None
     for i in range(0, n, batch_size):
         batch_data = x[i:i + batch_size, :, :, :]
         batch_labels = y[i:i + batch_size, :, :]
         results = model.apply(batch_data)
         results = np.argmax(results, axis=-1)
+        for img in results:
+            colored = np.empty(input_shape[1:], dtype=np.uint8)
+            for (x,y), value in np.ndenumerate(img):
+                colored[x, y, :] = get_color(label_to_original(value))
+            if fig is None:
+                fig = plt.imshow(colored)
+            else:
+                fig.set_data(colored)
+            #plt.pause(.1)
+            plt.draw()
+            #out.write(colored.transpose().astype(np.uint8))
 
-    colored = np.empty(input_shape[1:])
-
-    for (i, x, y), value in np.ndenumerate(results):
-        colored[i, x, y] = list(get_color(label_to_original(value)))
-        out.write(colored[i, x, y])
-
-    out.release()
+    #out.release()
 
 
 def test3(name):
