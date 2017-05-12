@@ -2,6 +2,7 @@ import atexit
 import numpy as np
 import sys
 import matplotlib.pyplot as plt
+import os.path
 
 
 from model import GenSeg
@@ -52,8 +53,8 @@ def test6():
 
 def test4():
     dr = DataReader(*datareader_params)
-    image_segmenter = GenSeg(input_shape=[None, 176, 608, 3], num_classes=num_classes, load_model='Long7-Lab-Fixed.ckpt')
-    velo_segmenter = GenSeg(input_shape=[None, 96, 96, 96, 1], num_classes=num_classes, load_model='lidar.ckpt')
+    image_segmenter = GenSeg(input_shape=[None, 176, 608, 3], num_classes=num_classes, load_model='saved/Long7-Lab-Fixed.ckpt')
+    velo_segmenter = GenSeg(input_shape=[None, 96, 96, 96, 1], num_classes=num_classes, load_model='saved/lidar.ckpt')
 
     x_image = dr.get_image_data()
     y_image_true = dr.get_image_labels()
@@ -61,32 +62,34 @@ def test4():
     image_hits = np.empty((3, 1))
     image_totals = np.empty((3, 1))
     for i in range(n):
-        image_pred = np.argmax(image_segmenter.apply(x_image[i, :, :, :]), axis=-1)
-        image_true = y_image_true[i, :, :]
+        print(i,'image')
+        image_pred = np.argmax(image_segmenter.apply(x_image[i:i+1, :, :, :]), axis=-1)
+        image_true = y_image_true[i:i+1, :, :]
         for j in range(3, 6):
             hit_pred = image_pred == j
             hit_true = image_true == j
             image_hits += np.sum(hit_true)
             image_totals += np.sum(np.logical_and(hit_pred, hit_true))
-    image_rates = image_hits / image_totals
 
     x_velo = dr.get_velodyne_data()
-    y_velo_true = dr.get_image_labels()
+    y_velo_true = dr.get_velodyne_labels()
     n, _, _, _ = y_velo_true.shape
     velo_hits = np.empty((3, 1))
     velo_totals = np.empty((3, 1))
     for i in range(n):
-        velo_pred = np.argmax(velo_segmenter.apply(x_velo[i, :, :, :, :]), axis=-1)
-        velo_true = y_velo_true[i, :, :, :]
+        print(i,'velo')
+        velo_pred = np.argmax(velo_segmenter.apply(x_velo[i:i+1, :, :, :, :]), axis=-1)
+        velo_true = y_velo_true[i:i+1, :, :, :]
         for j in range(3, 6):
             hit_pred = velo_pred == j
             hit_true = velo_true == j
             velo_hits += np.sum(hit_true)
             velo_totals += np.sum(np.logical_and(hit_pred, hit_true))
-    velo_rates = velo_hits / velo_totals
 
-    for rate in image_rate: print(rate)
-    for rate in velo_rate: print(rate)
+    for total in image_totals: print(total)
+    for hit in image_hits: print(hit)
+    for total in velo_totals: print(total)
+    for hit in velo_hits: print(hit)
 
 
 def test3(name):
