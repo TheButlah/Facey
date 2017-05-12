@@ -8,6 +8,7 @@ from model import GenSeg
 from util import DataReader, original_to_label
 from scipy.io import savemat
 from mpl_toolkits.mplot3d import Axes3D
+from sklearn.cluster import DBSCAN
 
 num_classes = 6
 input_shape = [None, 96, 96, 96, 1]
@@ -20,7 +21,33 @@ def main():
     if number is 2: test2(name)
     elif number is 3: test3(name)
     elif number is 4: test4()
+    elif number is 6: test6()
     else: test1(name)
+
+
+
+def test6():
+    image_segmenter = GenSeg(input_shape=[None, 176, 608, 3], num_classes=num_classes, load_model='Long7-Lab-Fixed.ckpt')
+    dr = DataReader(*datareader_params)
+    images = dr.get_image_data()
+    image_preds = image_segmenter.apply(images)
+    image_pred = image_preds[0, :, :, :]
+    candidates = []
+    for i in range(3, 6):
+        class_hits = np.argmax(image_pred, axis=-1) == i
+        class_hits = np.argwhere(class_hits)
+        confidences = image_pred[class_hits[:, 0], class_hits[:, 1], :]
+        dbscan = DBSCAN(eps=10, min_samples=1)
+        dbscan.fit(class_hits)
+        labels = dbscan._labels
+        for j in range(np.max(labels) + 1):
+            idxs = labels == j
+            idxs = np.argwhere(idxs)
+            avg_conf = confidences[idxs, :]
+            avg_conf = np.mean(avg_conf, 0)
+            com = class_hits[idxs, :]
+            candidates.append((i, avg_conf, com))
+    print(candidates)
 
 
 def test4():
