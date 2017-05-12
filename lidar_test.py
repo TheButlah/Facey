@@ -45,7 +45,7 @@ def test4():
 
     x_velo = dr.get_velodyne_data()
     y_velo_true = dr.get_velodyne_labels()
-    n, _, _, _, _ = y_velo_true.shape
+    n, _, _, _ = y_velo_true.shape
     velo_hits = np.empty((3, 1))
     velo_totals = np.empty((3, 1))
     for i in range(n):
