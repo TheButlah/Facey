@@ -34,7 +34,8 @@ def test4():
     image_hits = np.empty((3, 1))
     image_totals = np.empty((3, 1))
     for i in range(n):
-        image_pred = np.argmax(image_segmenter.apply(x_image[i, :, :, :]), axis=-1)
+        print(i,'image')
+	image_pred = np.argmax(image_segmenter.apply(x_image[i, :, :, :]), axis=-1)
         image_true = y_image_true[i, :, :]
         for j in range(3, 6):
             hit_pred = image_pred == j
@@ -49,6 +50,7 @@ def test4():
     velo_hits = np.empty((3, 1))
     velo_totals = np.empty((3, 1))
     for i in range(n):
+	print(i,'velo')
         velo_pred = np.argmax(velo_segmenter.apply(x_velo[i, :, :, :, :]), axis=-1)
         velo_true = y_velo_true[i, :, :, :]
         for j in range(3, 6):

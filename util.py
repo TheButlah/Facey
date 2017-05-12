@@ -220,7 +220,7 @@ class DataReader(object):
         shape = np.insert(shape, 0, len(self._velodyne_data))
         velo_data = np.empty(shape)
         k = 0
-        for filename in self._velodyne_data:
+        for filename in self._velodyne_data[:1]:
             velo = np.fromfile(filename, dtype='float32')
             velo = np.reshape(velo, [-1, 4])
             #velo = np.reshape(velo, [4, -1])
