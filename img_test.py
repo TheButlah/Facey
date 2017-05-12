@@ -47,8 +47,8 @@ def test4(name):
         results = np.argmax(results, axis=-1)
         for img in results:
             colored = np.empty(input_shape[1:], dtype=np.uint8)
-            for (x,y), value in np.ndenumerate(img):
-                colored[x, y, :] = get_color(label_to_original(value))
+            for (idx, idy), value in np.ndenumerate(img):
+                colored[idx, idy, :] = get_color(label_to_original(value))
             if fig is None:
                 fig = plt.imshow(colored)
             else:
