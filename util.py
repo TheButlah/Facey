@@ -153,7 +153,7 @@ def gen_label_occupancy_grid(x, lower_left, upper_right, divisions, num_classes)
     for row in indices:
         print(row)
         if np.sum(row[:3] >= np.zeros([1, 3])) == 3 and np.sum(row[:3] < divisions) == 3:
-            output[row[0], row[1], row[2], row[3]] += 1
+            output[row[0], row[1], row[2], original_to_label(row[3])] += 1
     output = np.argmax(output, -1)
     return output
 
