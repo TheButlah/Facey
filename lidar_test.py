@@ -1,13 +1,17 @@
 import atexit
 import numpy as np
 import sys
+import matplotlib.pyplot as plt
 
 
 from model import GenSeg
 from util import DataReader, original_to_label
+from scipy.io import savemat
+from mpl_toolkits.mplot3d import Axes3D
 
 num_classes = 6
-datareader_params = ('data/', (352, 1216, 3), np.array([0, -32, -16]), np.array([64, 32, 16]), np.array([32, 32, 32]), num_classes)
+input_shape = [None, 32, 32, 32, 1]
+datareader_params = ('data/', (352, 1216, 3), np.array([0, -32, -16]), np.array([64, 32, 16]), np.array([32, 32, 32]), 11)
 
 
 def main():
@@ -17,13 +21,23 @@ def main():
     else: test1(name)
 
 
-def test1(name):
-    input_shape = [None, 32, 32, 32, 1]
-
+def test2(name):
     dr = DataReader(*datareader_params)
     x = dr.get_velodyne_data()
     y = dr.get_velodyne_labels()
-    print('HENLO', np.sum(y[0, :, :, :]))
+    func = np.vectorize(original_to_label)
+    y = func(y)
+    datapoint = y[0, :, :, :]
+    datapoint = np.argwhere(datapoint==1)
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.scatter(datapoint[:, 0], datapoint[:, 1], datapoint[:, 2])
+
+
+def test1(name):
+    dr = DataReader(*datareader_params)
+    x = dr.get_velodyne_data()
+    y = dr.get_velodyne_labels()
     func = np.vectorize(original_to_label)
     y = func(y)
     n, _, _, _, _ = x.shape
@@ -36,7 +50,6 @@ def test1(name):
         idxs = np.random.permutation(n)[:batch_size]
         batch_data = x[idxs, :, :, :, :]
         batch_labels = y[idxs, :, :, :]
-        print('GON TRAIN RIGHT NAO')
         print(iteration, model.train(
             x_train=batch_data, y_train=batch_labels,
             num_epochs=1, start_stop_info=False, progress_info=False

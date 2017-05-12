@@ -150,7 +150,7 @@ def gen_label_occupancy_grid(x, lower_left, upper_right, divisions, num_classes)
     indices = indices.astype(int)
     for row in indices:
         if np.sum(row[:3] >= np.zeros([1, 3])) == 3 and np.sum(row[:3] < divisions) == 3:
-            output[row[0], row[1], row[2], original_to_label(row[3])] += 1
+            output[row[0], row[1], row[2], row[3]] += 1
     output = np.argmax(output, -1)
     return output
 
@@ -220,7 +220,7 @@ class DataReader(object):
         shape = np.insert(shape, 0, len(self._velodyne_data))
         velo_data = np.empty(shape)
         k = 0
-        for filename in self._velodyne_data:
+        for filename in self._velodyne_data[:1]:
             velo = np.fromfile(filename, dtype='float32')
             velo = np.reshape(velo, [4, -1])
             velo = np.transpose(velo)
@@ -235,7 +235,7 @@ class DataReader(object):
         shape = np.insert(self._divisions, 0, len(self._velodyne_data))
         label_data = np.empty(shape)
         k = 0
-        for (data_filename, label_filename) in zip(self._velodyne_data, self._velodyne_labels):
+        for (data_filename, label_filename) in zip(self._velodyne_data[:1], self._velodyne_labels[:1]):
             velo = np.fromfile(data_filename, dtype='float32')
             velo = np.reshape(velo, [4, -1])
             velo = np.transpose(velo)
@@ -248,6 +248,7 @@ class DataReader(object):
             k += 1
             print(k)
         return label_data
+
 
 def original_to_label(original):
     return {
