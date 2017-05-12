@@ -220,10 +220,11 @@ class DataReader(object):
         shape = np.insert(shape, 0, len(self._velodyne_data))
         velo_data = np.empty(shape)
         k = 0
-        for filename in self._velodyne_data[:1]:
+        for filename in self._velodyne_data:
             velo = np.fromfile(filename, dtype='float32')
-            velo = np.reshape(velo, [4, -1])
-            velo = np.transpose(velo)
+            velo = np.reshape(velo, [-1, 4])
+            #velo = np.reshape(velo, [4, -1])
+            #velo = np.transpose(velo)
             velo = velo[:, 0:3]
             velo = gen_occupancy_grid(velo, self._lower_left, self._upper_right, self._divisions)
             velo_data[k, :, :, :, :] = velo
@@ -235,10 +236,11 @@ class DataReader(object):
         shape = np.insert(self._divisions, 0, len(self._velodyne_data))
         label_data = np.empty(shape)
         k = 0
-        for (data_filename, label_filename) in zip(self._velodyne_data[:1], self._velodyne_labels[:1]):
+        for (data_filename, label_filename) in zip(self._velodyne_data, self._velodyne_labels):
             velo = np.fromfile(data_filename, dtype='float32')
-            velo = np.reshape(velo, [4, -1])
-            velo = np.transpose(velo)
+            velo = np.reshape(velo, [-1, 4])
+            #velo = np.reshape(velo, [4, -1])
+            #velo = np.transpose(velo)
             velo = velo[:, 0:3]
             label = io.loadmat(label_filename)
             label = label['truth']
