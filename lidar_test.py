@@ -18,7 +18,20 @@ def main():
     name = 'saved/lidar.ckpt'
     number = int(sys.argv[1])
     if number is 2: test2(name)
+    elif number is 3: test3(name)
     else: test1(name)
+
+
+def test3(name):
+    dr = DataReader(*datareader_params)
+    x = dr.get_velodyne_data()
+    model = GenSeg(input_shape=input_shape, num_classes=num_classes, load_model=name)
+    datapoint = model.apply(x[:1, :, :, :, :])
+    datapoint = np.argwhere(datapoint==3)
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.scatter(datapoint[:, 0], datapoint[:, 1], datapoint[:, 2])
+    plt.show()
 
 
 def test2(name):
