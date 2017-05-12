@@ -25,8 +25,8 @@ def main():
 
 def test4():
     dr = DataReader(*datareader_params)
-    image_segmenter = GenSeg(input_shape=[None, 176, 608, 3], num_classes=num_classes, load_model='Long7-Lab-Fixed.ckpt')
-    velo_segmenter = GenSeg(input_shape=[None, 96, 96, 96, 1], num_classes=num_classes, load_model='lidar.ckpt')
+    image_segmenter = GenSeg(input_shape=[None, 176, 608, 3], num_classes=num_classes, load_model='saved/Long7-Lab-Fixed.ckpt')
+    velo_segmenter = GenSeg(input_shape=[None, 96, 96, 96, 1], num_classes=num_classes, load_model='saved/lidar.ckpt')
 
     x_image = dr.get_image_data()
     y_image_true = dr.get_image_labels()
@@ -35,8 +35,8 @@ def test4():
     image_totals = np.empty((3, 1))
     for i in range(n):
         print(i,'image')
-        image_pred = np.argmax(image_segmenter.apply(x_image[i, :, :, :]), axis=-1)
-        image_true = y_image_true[i, :, :]
+        image_pred = np.argmax(image_segmenter.apply(x_image[i:i+1, :, :, :]), axis=-1)
+        image_true = y_image_true[i:i+1, :, :]
         for j in range(3, 6):
             hit_pred = image_pred == j
             hit_true = image_true == j
@@ -44,14 +44,14 @@ def test4():
             image_totals += np.sum(np.logical_and(hit_pred, hit_true))
 
     x_velo = dr.get_velodyne_data()
-    y_velo_true = dr.get_image_labels()
-    n, _, _, _ = y_velo_true.shape
+    y_velo_true = dr.get_velodyne_labels()
+    n, _, _, _, _ = y_velo_true.shape
     velo_hits = np.empty((3, 1))
     velo_totals = np.empty((3, 1))
     for i in range(n):
         print(i,'velo')
-        velo_pred = np.argmax(velo_segmenter.apply(x_velo[i, :, :, :, :]), axis=-1)
-        velo_true = y_velo_true[i, :, :, :]
+        velo_pred = np.argmax(velo_segmenter.apply(x_velo[i:i+1, :, :, :, :]), axis=-1)
+        velo_true = y_velo_true[i:i+1, :, :, :]
         for j in range(3, 6):
             hit_pred = velo_pred == j
             hit_true = velo_true == j
