@@ -27,12 +27,14 @@ def main():
 
 
 def test5(name):
-    image_segmenter = GenSeg(input_shape=[None, 176, 608, 3], num_classes=num_classes, load_model=name)
+    image_segmenter = GenSeg(input_shape=[None, 176, 608, 3], num_classes=num_classes, load_model='saved/Long7-Lab-Fixed.ckpt')
+    velo_segmenter = GenSeg(input_shape=[None, 96, 96, 96, 1], num_classes=num_classes, load_model='saved/lidar.ckpt')
     dr = DataReader(*datareader_params)
+
     images = dr.get_image_data()[:1, :, :, :]
     image_preds = image_segmenter.apply(images)
     image_pred = image_preds[0, :, :, :]
-    candidates = []
+    image_candidates = []
     for i in range(3, 6):
         class_hits = np.argmax(image_pred, axis=-1) == i
         class_hits = np.argwhere(class_hits)
@@ -47,8 +49,39 @@ def test5(name):
                 avg_conf = confidences[idxs, :]
                 avg_conf = np.mean(avg_conf, 0)
                 com = np.mean(class_hits[idxs, :], 0)
-                candidates.append((i, avg_conf, com))
-    print(len(candidates))
+                image_candidates.append((i, avg_conf, com))
+
+    velos = dr.get_velodyne_data()[:1, :, :, :, :]
+    velo_preds = velo_segmenter.apply(velos)
+    velo_pred = velo_preds[0, :, :, :, :]
+    velo_candidates = []
+    for i in range(3, 6):
+        class_hits = np.argmax(velo_pred, axis=-1) == i
+        class_hits = np.argwhere(class_hits)
+        if len(class_hits) > 0:
+            confidences = velo_pred[class_hits[:, 0], class_hits[:, 1], class_hits[:, 2], :]
+            dbscan = DBSCAN(eps=10, min_samples=1)
+            dbscan.fit(class_hits)
+            labels = dbscan.labels_
+            for j in range(np.max(labels) + 1):
+                idxs = labels == j
+                idxs = np.argwhere(idxs)
+                avg_conf = confidences[idxs, :]
+                avg_conf = np.mean(avg_conf, 0)
+                com = np.mean(class_hits[idxs, :], 0)
+                velo_candidates.append((i, avg_conf, com))
+
+    print('IMAGE CANDIDATES')
+    for (class_number, avg_conf, com) in image_candidates:
+        print('Class number:', class_number)
+        print('Average confidence number:', avg_conf)
+        print('Center of mass:', com)
+
+    print('VELODYNE CANDIDATES')
+    for (class_number, avg_conf, com) in image_candidates:
+        print('Class number:', class_number)
+        print('Average confidence number:', avg_conf)
+        print('Center of mass:', com)
 
 
 def test4():
