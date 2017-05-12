@@ -40,7 +40,7 @@ def test5(name):
         class_hits = np.argwhere(class_hits)
         if len(class_hits) > 0:
             confidences = image_pred[class_hits[:, 0], class_hits[:, 1], :]
-            dbscan = DBSCAN(eps=20, min_samples=1)
+            dbscan = DBSCAN(eps=50, min_samples=1)
             dbscan.fit(class_hits)
             labels = dbscan.labels_
             for j in range(np.max(labels) + 1):
@@ -60,7 +60,7 @@ def test5(name):
         class_hits = np.argwhere(class_hits)
         if len(class_hits) > 0:
             confidences = velo_pred[class_hits[:, 0], class_hits[:, 1], class_hits[:, 2], :]
-            dbscan = DBSCAN(eps=10, min_samples=1)
+            dbscan = DBSCAN(eps=50, min_samples=1)
             dbscan.fit(class_hits)
             labels = dbscan.labels_
             for j in range(np.max(labels) + 1):
@@ -74,15 +74,20 @@ def test5(name):
     print('IMAGE CANDIDATES')
     for (class_number, avg_conf, com) in image_candidates:
         print('Class number:', class_number)
-        print('Average confidence number:', avg_conf)
-        print('Center of mass:', com)
+        print('Average confidence:')
+        for conf in avg_conf: print(conf)
+        print('Center of mass:')
+        for coord in com: print(coord)
+        print('')
 
     print('VELODYNE CANDIDATES')
-    for (class_number, avg_conf, com) in image_candidates:
+    for (class_number, avg_conf, com) in velo_candidates:
         print('Class number:', class_number)
-        print('Average confidence number:', avg_conf)
-        print('Center of mass:', com)
-
+        print('Average confidence:')
+        for conf in avg_conf: print(conf)
+        print('Center of mass:')
+        for coord in com: print(coord)
+        print('')
 
 def test4():
     dr = DataReader(*datareader_params)
