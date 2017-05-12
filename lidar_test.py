@@ -1,7 +1,7 @@
 import atexit
 import numpy as np
 import sys
-import cv2
+
 
 from model import GenSeg
 from util import DataReader, original_to_label
@@ -23,6 +23,7 @@ def test1(name):
     dr = DataReader(*datareader_params)
     x = dr.get_velodyne_data()
     y = dr.get_velodyne_labels()
+    print('HENLO', np.sum(y[0, :, :, :]))
     func = np.vectorize(original_to_label)
     y = func(y)
     n, _, _, _, _ = x.shape
