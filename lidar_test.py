@@ -28,27 +28,28 @@ def main():
 
 
 def test6():
-    image_segmenter = GenSeg(input_shape=[None, 176, 608, 3], num_classes=num_classes, load_model='Long7-Lab-Fixed.ckpt')
+    image_segmenter = GenSeg(input_shape=[None, 176, 608, 3], num_classes=num_classes, load_model='saved/Long7-Lab-Fixed.ckpt')
     dr = DataReader(*datareader_params)
-    images = dr.get_image_data()
+    images = dr.get_image_data()[:1, :, :, :]
     image_preds = image_segmenter.apply(images)
     image_pred = image_preds[0, :, :, :]
     candidates = []
     for i in range(3, 6):
         class_hits = np.argmax(image_pred, axis=-1) == i
         class_hits = np.argwhere(class_hits)
-        confidences = image_pred[class_hits[:, 0], class_hits[:, 1], :]
-        dbscan = DBSCAN(eps=10, min_samples=1)
-        dbscan.fit(class_hits)
-        labels = dbscan._labels
-        for j in range(np.max(labels) + 1):
-            idxs = labels == j
-            idxs = np.argwhere(idxs)
-            avg_conf = confidences[idxs, :]
-            avg_conf = np.mean(avg_conf, 0)
-            com = class_hits[idxs, :]
-            candidates.append((i, avg_conf, com))
-    print(candidates)
+        if len(class_hits) > 0:
+            confidences = image_pred[class_hits[:, 0], class_hits[:, 1], :]
+            dbscan = DBSCAN(eps=20, min_samples=1)
+            dbscan.fit(class_hits)
+            labels = dbscan.labels_
+            for j in range(np.max(labels) + 1):
+                idxs = labels == j
+                idxs = np.argwhere(idxs)
+                avg_conf = confidences[idxs, :]
+                avg_conf = np.mean(avg_conf, 0)
+                com = np.mean(class_hits[idxs, :], 0)
+                candidates.append((i, avg_conf, com))
+    print(len(candidates))
 
 
 def test4():
