@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import tensorflow as tf
 import numpy as np
 import os
@@ -195,12 +197,18 @@ class DataReader(object):
     def get_image_data(self):
         h, w, c = self._image_shape
         shape = (len(self._image_labels), h // 2, w // 2, c)
+        img_data_loc = 'processed/img_data.npy'
+        if os.path.exists(img_data_loc):
+            image_data = np.load(img_data_loc)
+            return image_data
         image_data = np.empty(shape)
         k = 0
         for filename in self._image_data:
             image = normalize_img(misc.imread(filename))  # Fix brightness and convert to lab colorspace
             image_data[k, :, :, :] = image[0:h:2, 0:w:2, 0:c]
             k += 1
+        Path(os.path.dirname(img_data_loc)).mkdir(exist_ok=True)
+        np.save(img_data_loc, image_data)
         return image_data
 
     def get_image_labels(self):
@@ -218,6 +226,10 @@ class DataReader(object):
     def get_velodyne_data(self):
         shape = np.append(self._divisions, 1)
         shape = np.insert(shape, 0, len(self._velodyne_data))
+        vel_data_loc = 'processed/vel_data.npy'
+        if os.path.exists(vel_data_loc):
+            velo_data = np.load(vel_data_loc)
+            return velo_data
         velo_data = np.empty(shape)
         k = 0
         for filename in self._velodyne_data[:1]:
@@ -230,6 +242,8 @@ class DataReader(object):
             velo_data[k, :, :, :, :] = velo
             k += 1
             print(k)
+        Path(os.path.dirname(vel_data_loc)).mkdir(exist_ok=True)
+        np.save(vel_data_loc, velo_data)
         return velo_data
 
     def get_velodyne_labels(self):

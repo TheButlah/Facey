@@ -21,24 +21,8 @@ def main():
     if number is 2: test2(name)
     elif number is 3: test3(name)
     elif number is 4: test4()
+    elif number is 5: test5()
     else: test1(name)
-
-
-def test5():
-    dr = DataReader(*datareader_params)
-    img_data_loc = 'processed/img_data.npy'
-    if os.path.exists(img_data_loc):
-        img_data = np.load(img_data_loc)
-    else:
-        img_data = dr.get_image_data()
-        np.save(img_data_loc, img_data)
-    vel_data_loc = 'processed/vel_data.npy'
-    if os.path.exists(vel_data_loc):
-        vel_data = np.load(vel_data_loc)
-    else:
-        vel_data = dr.get_velodyne_data()
-        np.save(vel_data_loc, vel_data)
-    print(img_data)
 
 
 def test4():
