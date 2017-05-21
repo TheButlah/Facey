@@ -49,7 +49,7 @@ def test4(name):
             for (idx, idy), value in np.ndenumerate(img):
                 colored[idx, idy, :] = get_color(label_to_original(value))
             if f is None:
-                f = np.imshow(colored)
+                f = plt.imshow(colored)
             else:
                 f.set_data(colored)
             plt.pause(.05)
