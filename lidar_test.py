@@ -23,7 +23,34 @@ def main():
     elif number is 3: test3(name)
     elif number is 4: test4()
     elif number is 5: test5(name)
+    elif number is 6: test6(name)
     else: test1(name)
+
+
+def test6(name):
+    dr = DataReader(*datareader_params)
+    x = dr.get_velodyne_data()
+    y = dr.get_velodyne_labels()
+    func = np.vectorize(original_to_label)
+    y = func(y)
+    n, _, _, _, _ = x.shape
+    batch_size = 1
+
+    model = GenSeg(input_shape=input_shape, num_classes=num_classes, load_model=name)
+
+    average = 0
+    count = 0
+    for i in range(0, n, batch_size):
+        batch_data = x[i:i + batch_size, ...]
+        batch_labels = y[i:i + batch_size, ...]
+        results = model.apply(batch_data)
+        results = np.argmax(results, axis=-1)
+        results = np.equal(results, batch_labels)
+        results = np.average(results.astype(dtype=np.float32))
+        average += results
+        count += 1
+        print(i)
+    print(average / count)
 
 
 def test5(name):
@@ -144,7 +171,6 @@ def test3(name):
 
 def test2(name):
     dr = DataReader(*datareader_params)
-    print()
     x = dr.get_velodyne_data()
     y = dr.get_velodyne_labels()
     func = np.vectorize(original_to_label)
