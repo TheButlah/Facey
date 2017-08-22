@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import sys
 import atexit
 
-from model import GenSeg
+from model import Facey
 from util import DataReader, original_to_label, label_to_original, get_color, normalize_img
 from scipy.misc import imread, imsave
 from pylab import rcParams
@@ -33,7 +33,7 @@ def test4(name):
     n, _, _, _ = x.shape
     batch_size = 30
 
-    model = GenSeg(input_shape=input_shape, num_classes=num_classes, load_model=name)
+    model = Facey(input_shape=input_shape, num_classes=num_classes, load_model=name)
 
     #fourcc = cv2.VideoWriter_fourcc(*'MJPG')
     #out = cv2.VideoWriter('out.avi', fourcc, 20.0, tuple(input_shape[1:-1]))
@@ -70,7 +70,7 @@ def test3(name):
     n, _, _, _ = x.shape
     batch_size = 30
 
-    model = GenSeg(input_shape=input_shape, num_classes=num_classes, load_model=name)
+    model = Facey(input_shape=input_shape, num_classes=num_classes, load_model=name)
 
     average = 0
     count = 0
@@ -109,7 +109,7 @@ def test2(name):
         plt.show()'''
         i += 1
 
-    model = GenSeg(input_shape=[None, h, w, c], num_classes=num_classes, load_model=name)
+    model = Facey(input_shape=[None, h, w, c], num_classes=num_classes, load_model=name)
     result = model.apply(image_data)
     result = np.argmax(result, axis=-1)
 
@@ -145,7 +145,7 @@ def test1(name):
     batch_size = 30
     iterations = sys.maxsize
 
-    model = GenSeg(input_shape=input_shape, num_classes=num_classes, load_model=name)
+    model = Facey(input_shape=input_shape, num_classes=num_classes, load_model=name)
     atexit.register(model.save_model, name)  # In case of ctrl-C
     for iteration in range(iterations):
         idxs = np.random.permutation(n)[:batch_size]

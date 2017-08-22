@@ -6,8 +6,8 @@ from util import *
 import os
 
 
-class GenSeg:
-    """GenSeg is a supervised machine learning model that semantically segments n-dimensional data.
+class Facey:
+    """Facey is an unsupervised convolutional autoencoder for facial reconstruction
 
     GenSeg is a generalized version of SegNet, in that it can operate on data with N spatial dimensions instead of
     just 2 like in the original SegNet. However, due to restrictions in TensorFlow, specifically in the way that
@@ -17,7 +17,7 @@ class GenSeg:
     that support into this implementation.
     """
 
-    def __init__(self, input_shape, num_classes, seed=None, load_model=None):
+    def __init__(self, input_shape, seed=None, load_model=None):
         """Initializes the architecture of GenSeg and returns an instance.
 
         Currently, only 1<=N<=3 spatial dimensions in the input data are supported due to limitations in TensorFlow, so
@@ -27,7 +27,6 @@ class GenSeg:
             input_shape:    A list that represents the shape of the input. Can contain None as the first element to
                             indicate that the batch size can vary (this is the preferred way to do it). Example:
                             [None, 32, 32, 32, 1] for 3D data.
-            num_classes:    An integer that is equal to the number of classes that the data will be classified into.
             seed:           An integer used to seed the initial random state. Can be None to generate a new random seed.
             load_model:     If not None, then this should be a string indicating the checkpoint file containing data
                             that will be used to initialize the parameters of the model. Typically used when loading a
@@ -36,8 +35,6 @@ class GenSeg:
         print("Constructing Architecture...")
         self._input_shape = tuple(input_shape)  # Tuples are used to ensure the dimensions are immutable
         x_shape = tuple(input_shape)  # 1st dim should be the size of dataset
-        y_shape = tuple(input_shape[:-1])  # Rank of y should be one less
-        self._num_classes = num_classes
         self._seed = seed
         self._graph = tf.Graph()
         with self._graph.as_default():
@@ -45,7 +42,6 @@ class GenSeg:
 
             with tf.variable_scope('Input'):
                 self._x = tf.placeholder(tf.float32, shape=x_shape, name="X")
-                self._y = tf.placeholder(tf.int32, shape=y_shape, name="Y")
                 self._phase_train = tf.placeholder(tf.bool, name="Phase")
 
             with tf.variable_scope('Preprocessing'):
@@ -94,15 +90,11 @@ class GenSeg:
                 conv8_1, last_shape = conv(unpool8, last_shape, num_features, self._phase_train, seed=seed, scope='Conv8_1')
                 conv8_2, last_shape = conv(conv8_1, last_shape, num_features, self._phase_train, seed=seed, scope='Conv8_2')
 
-            with tf.variable_scope('Softmax'):
-                scores, _ = conv(conv8_2, last_shape, num_classes, self._phase_train, do_bn=False, size=1, seed=seed, scope='Scores')
-                self._y_hat = tf.nn.softmax(scores, name='Y-Hat')  # Operates on last dimension
+            with tf.variable_scope('Output'):
+                self._x_hat, _ = conv(conv8_2, last_shape, input_shape[-1], self._phase_train, do_bn=False, size=1, seed=seed, scope='Scores')
 
             with tf.variable_scope('Pipelining'):
-                self._loss = tf.reduce_mean(
-                    tf.nn.sparse_softmax_cross_entropy_with_logits(logits=scores, labels=self._y),
-                    name='Loss'
-                )
+                self._loss = tf.nn.l2_loss(self._x - self._x_hat)
                 self._train_step = tf.train.AdamOptimizer(learning_rate=0.01).minimize(self._loss)
 
             self._sess = tf.Session(graph=self._graph)  # Not sure if this really needs to explicitly specify the graph
@@ -118,7 +110,7 @@ class GenSeg:
                     self._sess.run(tf.global_variables_initializer())
                     print("Model Initialized!")
 
-    def train(self, x_train, y_train, num_epochs, start_stop_info=True, progress_info=True):
+    def train(self, x_train, num_epochs, start_stop_info=True, progress_info=True):
         """Trains the model using the data provided as a batch.
 
         Because GenSeg typically runs on large datasets, it is often infeasible to load the entire dataset on either
@@ -133,11 +125,6 @@ class GenSeg:
             x_train:  A numpy ndarray that contains the data to train over. Should should have a shape of
                 [batch_size, spatial_dim1, ... , spatial_dimN, channels]. Only 1<=N<=3 spatial dimensions are supported
                 currently. These should correspond to the shape of y_train.
-
-            y_train:  A numpy ndarray that contains the labels that correspond to the data being trained on. Should have
-                a shape of [batch_size, spatial_dim1, ... , spatial_dimN]. Only 1<=N<=3 spatial dimensions are supported
-                currently. These should correspond to the shape of x_train. The actual values in the tensor should be
-                integers corresponding to the labels. There should only be num_classes unique integers.
 
             num_epochs:  The number of iterations over the provided batch to perform until training is considered to be
                 complete. If all your data fits in memory and you don't need to mini-batch, then this should be a large
@@ -159,7 +146,7 @@ class GenSeg:
             for epoch in range(num_epochs):
                 _, loss_val = self._sess.run(
                     [self._train_step, self._loss],
-                    feed_dict={self._x: x_train, self._y: y_train, self._phase_train: True}
+                    feed_dict={self._x: x_train, self._phase_train: True}
                 )
                 current_time = time()
                 if progress_info and (current_time - last_time) >= 5:  # Only print progress every 5 seconds
@@ -181,7 +168,7 @@ class GenSeg:
             Example: result.shape is [batch_size, 640, 480, 10] for a 640x480 RGB image with 10 target classes
         """
         with self._sess.as_default():
-            return self._sess.run(self._y_hat, feed_dict={self._x: x_data, self._phase_train: False})
+            return self._sess.run(self._x_hat, feed_dict={self._x: x_data, self._phase_train: False})
 
     def save_model(self, save_path=None):
         """Saves the model in the specified file.
