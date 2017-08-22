@@ -1,2 +1,0 @@
-model_checkpoint_path: "/home/rjb392/Programming/GenSeg/saved/lidar.ckpt"
-all_model_checkpoint_paths: "/home/rjb392/Programming/GenSeg/saved/lidar.ckpt"
