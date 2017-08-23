@@ -1,0 +1,2 @@
+model_checkpoint_path: "/home/ryan/Programming/CDS/Facey/saved/saved.ckpt"
+all_model_checkpoint_paths: "/home/ryan/Programming/CDS/Facey/saved/saved.ckpt"

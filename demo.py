@@ -30,7 +30,7 @@ def main():
 
     def training_end():
         model.save_model(MODEL_PATH)
-        elapsed_time = time()
+        elapsed_time = time() - start_time
         print("Elapsed time: %d" % elapsed_time)
 
     atexit.register(training_end, model)
