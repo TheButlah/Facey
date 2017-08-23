@@ -66,10 +66,10 @@ def load_dataset():
 
 def load_model(data_shape):
     if os.path.isfile(MODEL_PATH):
-        model = Facey(input_shape=data_shape, seed=SEED, load_model=MODEL_PATH)
+        kevin = Facey(input_shape=data_shape, seed=SEED, load_model=MODEL_PATH)
     else:
-        model = Facey(input_shape=data_shape, seed=SEED)
-    return model
+        kevin = Facey(input_shape=data_shape, seed=SEED)
+    return kevin
 
 
 if __name__ == "__main__":
