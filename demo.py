@@ -10,8 +10,13 @@ from time import time
 
 FILENAME = 'dataset.npz'
 MODEL_PATH = 'saved/saved.ckpt'
-EPOCHS = 1
+EPOCHS = 10
 SEED = 1337
+
+WIDTH = 250
+HEIGHT = 250
+IMAGES = 13233
+BATCH_SIZE = 500
 
 
 def main():
@@ -28,7 +33,9 @@ def main():
     atexit.register(training_end, model)
 
     start_time = time()
-    model.train(train_data, EPOCHS)
+    for i in range(0, IMAGES, BATCH_SIZE):
+        minibatch = train_data[i:BATCH_SIZE]
+        model.train(minibatch, EPOCHS)
     training_end()
 
     train_results = model.apply(train_data)
@@ -37,7 +44,6 @@ def main():
 
 def show_dataset(dataset):
     plot = None
-    print(dataset.shape)
     for img in dataset:
         if plot is None:
             plot = plt.imshow(img, vmin=0, vmax=255)
@@ -53,12 +59,15 @@ def load_dataset():
         with np.load(FILENAME) as file:
             dataset = file['dataset']
     else:
-        dataset = np.empty([13233, 250, 250, 3], dtype=np.ubyte)
+        correct_w = WIDTH // 16 * 16
+        correct_h = HEIGHT // 16 * 16
+        print(correct_h, correct_w)
+        dataset = np.empty([IMAGES, correct_w, correct_h, 3], dtype=np.ubyte)
         i = 0
         for root, dirs, files in os.walk("lfw"):
             for file in files:
                 img_data = imread(root + '/' + file)
-                dataset[i] = img_data
+                dataset[i] = img_data[:correct_w, :correct_h, :]
                 i += 1
         np.savez_compressed(FILENAME, dataset=dataset)
     return dataset
