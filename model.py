@@ -7,15 +7,7 @@ import os
 
 
 class Facey:
-    """Facey is an unsupervised convolutional autoencoder for facial reconstruction
-
-    GenSeg is a generalized version of SegNet, in that it can operate on data with N spatial dimensions instead of
-    just 2 like in the original SegNet. However, due to restrictions in TensorFlow, specifically in the way that
-    convolutions work, this implementation of GenSeg only works for 1<=N<=3 spatial dimensions. This does mean that
-    this implementation can handle 3D and 1D data as well as the more conventional 2D data. Additionally, this
-    implementation is designed so that once support for N>3 is added into TensorFlow, it should be trivial to add
-    that support into this implementation.
-    """
+    """Facey is an unsupervised convolutional autoencoder for facial reconstruction"""
 
     def __init__(self, input_shape, seed=None, load_model=None):
         """Initializes the architecture of GenSeg and returns an instance.
@@ -25,8 +17,8 @@ class Facey:
 
         Args:
             input_shape:    A list that represents the shape of the input. Can contain None as the first element to
-                            indicate that the batch size can vary (this is the preferred way to do it). Example:
-                            [None, 32, 32, 32, 1] for 3D data.
+                            indicate that the batch size can vary (this is the preferred way to do it). The spatial dims
+                            should be divisible by 16. Example: [None, 32, 32, 32, 1] for 3D data.
             seed:           An integer used to seed the initial random state. Can be None to generate a new random seed.
             load_model:     If not None, then this should be a string indicating the checkpoint file containing data
                             that will be used to initialize the parameters of the model. Typically used when loading a
@@ -35,6 +27,9 @@ class Facey:
         print("Constructing Architecture...")
         self._input_shape = tuple(input_shape)  # Tuples are used to ensure the dimensions are immutable
         x_shape = tuple(input_shape)  # 1st dim should be the size of dataset
+        for dim in x_shape[1:-1]:
+            if dim % 16 is not 0:
+                raise ValueError("`input_shape` should have spatial dimensions divisible by 16.")
         self._seed = seed
         self._graph = tf.Graph()
         with self._graph.as_default():
