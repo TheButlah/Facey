@@ -4,3 +4,4 @@ __pycache__/
 *.swp
 processed/
 dataset.npz
+vgg16_weights.npz
