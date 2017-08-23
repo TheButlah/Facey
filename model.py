@@ -9,7 +9,7 @@ import os
 class Facey:
     """Facey is an unsupervised convolutional autoencoder for facial reconstruction"""
 
-    def __init__(self, input_shape, seed=None, load_model=None):
+    def __init__(self, input_shape, weights, seed=None, load_model=None):
         """Initializes the architecture of GenSeg and returns an instance.
 
         Currently, only 1<=N<=3 spatial dimensions in the input data are supported due to limitations in TensorFlow, so
@@ -26,6 +26,7 @@ class Facey:
         """
         print("Constructing Architecture...")
         self._input_shape = tuple(input_shape)  # Tuples are used to ensure the dimensions are immutable
+        self.weights = weights
         x_shape = tuple(input_shape)  # 1st dim should be the size of dataset
         for dim in x_shape[1:-1]:
             if dim % 16 is not 0:
@@ -44,46 +45,46 @@ class Facey:
                 x_norm = batch_norm(self._x, x_shape, self._phase_train, scope='X-Norm')
 
             with tf.variable_scope('Encoder'):
-                conv1_1, last_shape = conv(x_norm, x_shape, num_features, self._phase_train, seed=seed, scope='Conv1_1')
+                conv1_1, last_shape = conv(x_norm, x_shape, 64, self._phase_train, self.weights, seed=seed, scope='conv1_1')
                 relu1_1 = relu(conv1_1, scope='Relu1_1')
-                conv1_2, last_shape = conv(relu1_1, last_shape, num_features, self._phase_train, seed=seed, scope='Conv1_2')
+                conv1_2, last_shape = conv(relu1_1, last_shape, 64, self._phase_train, self.weights, seed=seed, scope='conv1_2')
                 relu1_2 = relu(conv1_2, scope='Relu1_2')
                 pool1, last_shape, mask1 = pool(relu1_2, last_shape, scope='Pool1')
 
-                conv2_1, last_shape = conv(pool1, last_shape, num_features, self._phase_train, seed=seed, scope='Conv2_1')
+                conv2_1, last_shape = conv(pool1, last_shape, 128, self._phase_train, self.weights, seed=seed, scope='conv2_1')
                 relu2_1 = relu(conv2_1, scope='Relu2_1')
-                conv2_2, last_shape = conv(relu2_1, last_shape, num_features, self._phase_train, seed=seed, scope='Conv2_2')
+                conv2_2, last_shape = conv(relu2_1, last_shape, 128, self._phase_train, self.weights, seed=seed, scope='conv2_2')
                 relu2_2 = relu(conv2_2, scope='Relu2_2')
                 pool2, last_shape, mask2 = pool(relu2_2, last_shape, scope='Pool2')
 
-                conv3_1, last_shape = conv(pool2, last_shape, num_features, self._phase_train, seed=seed, scope='Conv3_1')
+                conv3_1, last_shape = conv(pool2, last_shape, 256, self._phase_train, self.weights, seed=seed, scope='conv3_1')
                 relu3_1 = relu(conv3_1, scope='Relu3_1')
-                conv3_2, last_shape = conv(relu3_1, last_shape, num_features, self._phase_train, seed=seed, scope='Conv3_2')
+                conv3_2, last_shape = conv(relu3_1, last_shape, 256, self._phase_train, self.weights, seed=seed, scope='conv3_2')
                 relu3_2 = relu(conv3_2, scope='Relu3_2')
                 pool3, last_shape, mask3 = pool(relu3_2, last_shape, scope='Pool3')
 
-                conv4_1, last_shape = conv(pool3, last_shape, num_features, self._phase_train, seed=seed, scope='Conv4_1')
+                conv4_1, last_shape = conv(pool3, last_shape, 512, self._phase_train, self.weights, seed=seed, scope='conv4_1')
                 relu4_1 = relu(conv4_1, scope='Relu4_1')
-                conv4_2, last_shape = conv(relu4_1, last_shape, num_features, self._phase_train, seed=seed, scope='Conv4_2')
+                conv4_2, last_shape = conv(relu4_1, last_shape, 512, self._phase_train, self.weights, seed=seed, scope='conv4_2')
                 relu4_2 = relu(conv4_2, scope='Relu4_2')
                 pool4, last_shape, mask4 = pool(relu4_2, last_shape, scope='Pool4')
 
             with tf.variable_scope('Decoder'):
                 unpool5, last_shape = unpool(pool4, last_shape, mask4, scope='Unpool5')
-                conv5_1, last_shape = conv(unpool5, last_shape, num_features, self._phase_train, seed=seed, scope='Conv5_1')
-                conv5_2, last_shape = conv(conv5_1, last_shape, num_features, self._phase_train, seed=seed, scope='Conv5_2')
+                conv5_1, last_shape = conv(unpool5, last_shape, 256, self._phase_train, seed=seed, scope='Conv5_1')
+                conv5_2, last_shape = conv(conv5_1, last_shape, 256, self._phase_train, seed=seed, scope='Conv5_2')
 
                 unpool6, last_shape = unpool(conv5_2, last_shape, mask3, scope='Unpool6')
-                conv6_1, last_shape = conv(unpool6, last_shape, num_features, self._phase_train, seed=seed, scope='Conv6_1')
-                conv6_2, last_shape = conv(conv6_1, last_shape, num_features, self._phase_train, seed=seed, scope='Conv6_2')
+                conv6_1, last_shape = conv(unpool6, last_shape, 128, self._phase_train, seed=seed, scope='Conv6_1')
+                conv6_2, last_shape = conv(conv6_1, last_shape, 128, self._phase_train, seed=seed, scope='Conv6_2')
 
                 unpool7, last_shape = unpool(conv6_2, last_shape, mask2, scope='Unpool7')
-                conv7_1, last_shape = conv(unpool7, last_shape, num_features, self._phase_train, seed=seed, scope='Conv7_1')
-                conv7_2, last_shape = conv(conv7_1, last_shape, num_features, self._phase_train, seed=seed, scope='Conv7_2')
+                conv7_1, last_shape = conv(unpool7, last_shape, 64, self._phase_train, seed=seed, scope='Conv7_1')
+                conv7_2, last_shape = conv(conv7_1, last_shape, 64, self._phase_train, seed=seed, scope='Conv7_2')
 
                 unpool8, last_shape = unpool(conv7_2, last_shape, mask1, scope='Unpool8')
-                conv8_1, last_shape = conv(unpool8, last_shape, num_features, self._phase_train, seed=seed, scope='Conv8_1')
-                conv8_2, last_shape = conv(conv8_1, last_shape, num_features, self._phase_train, seed=seed, scope='Conv8_2')
+                conv8_1, last_shape = conv(unpool8, last_shape, 32, self._phase_train, seed=seed, scope='Conv8_1')
+                conv8_2, last_shape = conv(conv8_1, last_shape, 32, self._phase_train, seed=seed, scope='Conv8_2')
 
             with tf.variable_scope('Output'):
                 self._x_hat, _ = conv(conv8_2, last_shape, input_shape[-1], self._phase_train, do_bn=False, size=1, seed=seed, scope='Scores')

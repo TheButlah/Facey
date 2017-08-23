@@ -9,7 +9,7 @@ from skimage.exposure import equalize_adapthist
 from skimage.color import rgb2lab, lab2rgb
 
 
-def batch_norm(x, shape, phase_train, scope='BN'):
+def batch_norm(x, shape, phase_train, scope='BN', weights=None):
     """
     Batch normalization on convolutional maps.
     Ref.: http://stackoverflow.com/questions/33949786/how-could-i-use-batch-normalization-in-tensorflow
@@ -26,10 +26,11 @@ def batch_norm(x, shape, phase_train, scope='BN'):
     """
     with tf.variable_scope(scope):
         n_out = shape[-1]  # depth of input maps
-        beta = tf.Variable(tf.constant(0.0, shape=[n_out]),
-                           name='Beta', trainable=True)
-        gamma = tf.Variable(tf.constant(1.0, shape=[n_out]),
-                            name='Gamma', trainable=True)
+        if weights is None:
+            beta = tf.Variable(tf.constant(0.0, shape=[n_out]), name='Beta', trainable=True)
+        else:
+            beta = tf.Variable(weights[str(scope) + '_b'], name='Beta', trainable=True)
+        gamma = tf.Variable(tf.constant(1.0, shape=[n_out]), name='Gamma', trainable=True)
         batch_mean, batch_var = tf.nn.moments(x, list(range(len(shape[:-1]))), name='Moments')
         ema = tf.train.ExponentialMovingAverage(decay=0.5)
 
@@ -45,19 +46,23 @@ def batch_norm(x, shape, phase_train, scope='BN'):
     return normed
 
 
-def conv(x, input_shape, num_features, phase_train, do_bn=True, size=3, seed=None, scope='Conv'):
+def conv(x, input_shape, num_features, phase_train, weights=None, do_bn=True, size=3, seed=None, scope='Conv'):
     with tf.variable_scope(scope):
         kernel_shape = [size]*(len(input_shape)-2)
         kernel_shape.append(input_shape[-1])
         kernel_shape.append(num_features)
         # example: input_shape is BHWC, kernel_shape is [3,3,D,num_features]
-        kernel = tf.Variable(tf.random_normal(kernel_shape, seed=seed, name='Kernel'))
+        # kernel = tf.Variable(tf.random_normal(kernel_shape, seed=seed, name='Kernel'))
+        if weights is None:
+            kernel = tf.Variable(tf.random_normal(kernel_shape, seed=seed, name='Kernel'))
+        else:
+            kernel = tf.Variable(weights[scope + '_W'])
         convolved = tf.nn.convolution(x, kernel, padding="SAME", name='Conv')
         convolved_shape = list(input_shape)
         convolved_shape[-1] = num_features
         # example: input_shape is BHWC, convolved_shape is [B,H,W,num_features]
         if do_bn:
-            return batch_norm(convolved, convolved_shape, phase_train), convolved_shape
+            return batch_norm(convolved, convolved_shape, phase_train, scope=scope), convolved_shape
         else:
             return convolved, convolved_shape
 
