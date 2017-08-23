@@ -32,9 +32,9 @@ def show_dataset(dataset):
             plot = plt.imshow(img, vmin=0, vmax=255)
         else:
             plot.set_data(img)
-        plt.pause(0.01)
+        plt.pause(0.0001)
         plt.draw()
-    plt.close()
+    # plt.close()
 
 def load_model(data_shape):
     if os.path.isfile(MODEL_PATH):
@@ -88,24 +88,27 @@ def stream_capture(buffer):
     # plt.show()
 
 def main():
-    buffer_size = 200
+
+    buffer_size = 3
     # initial_data = load_dataset(buffer_size)
     initial_data = np.zeros((buffer_size, 480, 640, 3))
     buffer = Buffer(initial_data)
     kevin = load_model((None,) + buffer.shape[1:])
 
     def train_model():
-        try:
-            while True:
-                kevin.train(buffer.array, EPOCHS)
-    except KeyboardInterrupt:
-        pass
+        while True:
+            kevin.train(buffer.array, EPOCHS)
+
+    def test_model():
+        while True:
+            show_dataset(kevin.apply(buffer.array))
 
     t1 = threading.Thread(target=stream_capture, args=(buffer,))
-    t2 = threading.Thread(target=train_model())
-
+    t2 = threading.Thread(target=train_model)
+    t3 = threading.Thread(target=test_model)
     t1.start()
     t2.start()
+    t3.start()
 
 if __name__ == '__main__':
     main()
