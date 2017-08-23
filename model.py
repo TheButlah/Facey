@@ -89,8 +89,8 @@ class Facey:
                 self._x_hat, _ = conv(conv8_2, last_shape, input_shape[-1], self._phase_train, do_bn=False, size=1, seed=seed, scope='Scores')
 
             with tf.variable_scope('Pipelining'):
-                self._loss = tf.nn.l2_loss(self._x - self._x_hat)
-                self._train_step = tf.train.AdamOptimizer(learning_rate=0.01).minimize(self._loss)
+                self._loss = tf.reduce_mean(tf.abs(self._x - self._x_hat))
+                self._train_step = tf.train.GradientDescentOptimizer(learning_rate=0.001).minimize(self._loss)
 
             self._sess = tf.Session(graph=self._graph)  # Not sure if this really needs to explicitly specify the graph
             with self._sess.as_default():

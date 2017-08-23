@@ -15,19 +15,19 @@ SEED = 1337
 
 WIDTH = 250
 HEIGHT = 250
-IMAGES = 13233
-BATCH_SIZE = 500
+IMAGES = 100
+BATCH_SIZE = 1
 
 
 def main():
     dataset = load_dataset()
-    train_data, test_data = train_test_split(dataset, train_size=0.2)
-
-    model = load_model((None,) + dataset.shape[1:])
+    train_data, test_data = train_test_split(dataset, train_size=0.8)
+    #del dataset
+    model = load_model((None,) + train_data.shape[1:])
 
     def training_end():
         model.save_model(MODEL_PATH)
-        elapsed_time = start_time-time()
+        elapsed_time = time()
         print("Elapsed time: %d" % elapsed_time)
 
     atexit.register(training_end, model)
@@ -35,10 +35,11 @@ def main():
     start_time = time()
     for i in range(0, IMAGES, BATCH_SIZE):
         minibatch = train_data[i:BATCH_SIZE]
-        model.train(minibatch, EPOCHS)
+        loss = model.train(minibatch, EPOCHS, start_stop_info=False, progress_info=False)
+        print("Loss Value: %f" % loss)
     training_end()
 
-    train_results = model.apply(train_data)
+    train_results = model.apply(train_data[:10])
     show_dataset(train_results)
 
 
@@ -64,12 +65,18 @@ def load_dataset():
         print(correct_h, correct_w)
         dataset = np.empty([IMAGES, correct_w, correct_h, 3], dtype=np.ubyte)
         i = 0
+        should_break = False
         for root, dirs, files in os.walk("lfw"):
+            if should_break: break
             for file in files:
                 img_data = imread(root + '/' + file)
                 dataset[i] = img_data[:correct_w, :correct_h, :]
                 i += 1
+                if i > BATCH_SIZE:
+                    should_break = True
+                    break 
         np.savez_compressed(FILENAME, dataset=dataset)
+    assert np.all(np.isfinite(dataset))
     return dataset
 
 
