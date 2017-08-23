@@ -10,6 +10,8 @@ from time import time
 
 FILENAME = 'dataset.npz'
 MODEL_PATH = 'saved/saved.ckpt'
+WEIGHTS_PATH = 'vgg16_weights.npz'
+
 EPOCHS = 10
 SEED = 1337
 
@@ -18,6 +20,7 @@ HEIGHT = 250
 IMAGES = 100
 BATCH_SIZE = 1
 
+weights = None
 
 def main():
     dataset = load_dataset()
@@ -27,7 +30,7 @@ def main():
 
     def training_end():
         model.save_model(MODEL_PATH)
-        elapsed_time = time()
+        elapsed_time = time() - start_time
         print("Elapsed time: %d" % elapsed_time)
 
     atexit.register(training_end, model)
@@ -56,6 +59,8 @@ def show_dataset(dataset):
 
 
 def load_dataset():
+    global weights
+    weights = np.load(WEIGHTS_PATH)
     if os.path.isfile(FILENAME):
         with np.load(FILENAME) as file:
             dataset = file['dataset']
@@ -82,9 +87,9 @@ def load_dataset():
 
 def load_model(data_shape):
     if os.path.isfile(MODEL_PATH):
-        kevin = Facey(input_shape=data_shape, seed=SEED, load_model=MODEL_PATH)
+        kevin = Facey(input_shape=data_shape, seed=SEED, weights=weights, load_model=MODEL_PATH)
     else:
-        kevin = Facey(input_shape=data_shape, seed=SEED)
+        kevin = Facey(input_shape=data_shape, weights=weights, seed=SEED)
     return kevin
 
 
