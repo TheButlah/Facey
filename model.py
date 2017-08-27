@@ -46,7 +46,6 @@ class Facey:
 
             with tf.variable_scope('Input'):
                 self._x = tf.placeholder(tf.float32, shape=x_shape, name="X")
-                # tmp = tf.Print(self._x, [tf.reduce_sum(tf.cast(self._x > 0, tf.uint8))], message="Nonzeros in input: ")
                 self._phase_train = tf.placeholder(tf.bool, name="Phase")
 
             with tf.variable_scope('Preprocessing'):
@@ -100,7 +99,7 @@ class Facey:
 
             with tf.variable_scope('Pipelining'):
                 self._loss = tf.reduce_mean(tf.abs(self._x - self._x_hat))
-                self._train_step = tf.train.GradientDescentOptimizer(learning_rate=0.05).minimize(self._loss)
+                self._train_step = tf.train.AdamOptimizer(learning_rate=0.05).minimize(self._loss)
 
             with tf.variable_scope('Summaries'):
                 tf.summary.scalar('Loss', self._loss)
@@ -108,10 +107,13 @@ class Facey:
 
             self._sess = tf.Session(config=config)
             with self._sess.as_default():
-                self._saver = tf.train.Saver()
+                trainable_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
+                other_vars = [var for var in tf.global_variables() if var not in trainable_vars]
+                self._saver = tf.train.Saver(trainable_vars)
                 if load_model is not None:
                     print("Restoring Model...")
                     load_model = os.path.abspath(load_model)
+                    self._sess.run(tf.variables_initializer(other_vars))
                     self._saver.restore(self._sess, load_model)
                     print("Model Restored from %s" % load_model)
                 else:
