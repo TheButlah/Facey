@@ -28,12 +28,18 @@ class Facey:
         """
         print("Constructing Architecture...")
         self._input_shape = tuple(input_shape)  # Tuples are used to ensure the dimensions are immutable
-        self.weights = weights
+        self._weights = weights
         x_shape = tuple(input_shape)  # 1st dim should be the size of dataset
         for dim in x_shape[1:-1]:
             if dim % 16 is not 0:
                 raise ValueError("`input_shape` should have spatial dimensions divisible by 16.")
         self._seed = seed
+
+        self._last_time = 0  # Used by train to keep track of time
+        self._iter_count = 0  # Used by train to keep track of iterations
+        self._needs_update = False  # Used by train to indicate when enough time has passed to update summaries/stdout
+        self._summary_writer = None  # Used by train to write summaries
+
         self._graph = tf.Graph()
         with self._graph.as_default():
             num_features = 32
@@ -48,27 +54,27 @@ class Facey:
                 x_norm = batch_norm(self._x, x_shape, self._phase_train, scope='X-Norm')
 
             with tf.variable_scope('Encoder'):
-                conv1_1, last_shape = conv(x_norm, x_shape, 64, self._phase_train, self.weights, seed=seed, scope='conv1_1')
+                conv1_1, last_shape = conv(x_norm, x_shape, 64, self._phase_train, self._weights, seed=seed, scope='conv1_1')
                 relu1_1 = relu(conv1_1, scope='Relu1_1')
-                conv1_2, last_shape = conv(relu1_1, last_shape, 64, self._phase_train, self.weights, seed=seed, scope='conv1_2')
+                conv1_2, last_shape = conv(relu1_1, last_shape, 64, self._phase_train, self._weights, seed=seed, scope='conv1_2')
                 relu1_2 = relu(conv1_2, scope='Relu1_2')
                 pool1, last_shape, mask1 = pool(relu1_2, last_shape, scope='Pool1')
 
-                conv2_1, last_shape = conv(pool1, last_shape, 128, self._phase_train, self.weights, seed=seed, scope='conv2_1')
+                conv2_1, last_shape = conv(pool1, last_shape, 128, self._phase_train, self._weights, seed=seed, scope='conv2_1')
                 relu2_1 = relu(conv2_1, scope='Relu2_1')
-                conv2_2, last_shape = conv(relu2_1, last_shape, 128, self._phase_train, self.weights, seed=seed, scope='conv2_2')
+                conv2_2, last_shape = conv(relu2_1, last_shape, 128, self._phase_train, self._weights, seed=seed, scope='conv2_2')
                 relu2_2 = relu(conv2_2, scope='Relu2_2')
                 pool2, last_shape, mask2 = pool(relu2_2, last_shape, scope='Pool2')
 
-                conv3_1, last_shape = conv(pool2, last_shape, 256, self._phase_train, self.weights, seed=seed, scope='conv3_1')
+                conv3_1, last_shape = conv(pool2, last_shape, 256, self._phase_train, self._weights, seed=seed, scope='conv3_1')
                 relu3_1 = relu(conv3_1, scope='Relu3_1')
-                conv3_2, last_shape = conv(relu3_1, last_shape, 256, self._phase_train, self.weights, seed=seed, scope='conv3_2')
+                conv3_2, last_shape = conv(relu3_1, last_shape, 256, self._phase_train, self._weights, seed=seed, scope='conv3_2')
                 relu3_2 = relu(conv3_2, scope='Relu3_2')
                 pool3, last_shape, mask3 = pool(relu3_2, last_shape, scope='Pool3')
 
-                conv4_1, last_shape = conv(pool3, last_shape, 512, self._phase_train, self.weights, seed=seed, scope='conv4_1')
+                conv4_1, last_shape = conv(pool3, last_shape, 512, self._phase_train, self._weights, seed=seed, scope='conv4_1')
                 relu4_1 = relu(conv4_1, scope='Relu4_1')
-                conv4_2, last_shape = conv(relu4_1, last_shape, 512, self._phase_train, self.weights, seed=seed, scope='conv4_2')
+                conv4_2, last_shape = conv(relu4_1, last_shape, 512, self._phase_train, self._weights, seed=seed, scope='conv4_2')
                 relu4_2 = relu(conv4_2, scope='Relu4_2')
                 pool4, last_shape, mask4 = pool(relu4_2, last_shape, scope='Pool4')
 
@@ -96,6 +102,10 @@ class Facey:
                 self._loss = tf.reduce_mean(tf.abs(self._x - self._x_hat))
                 self._train_step = tf.train.GradientDescentOptimizer(learning_rate=0.05).minimize(self._loss)
 
+            with tf.variable_scope('Summaries'):
+                tf.summary.scalar('Loss', self._loss)
+                self._summaries = tf.summary.merge_all()
+
             self._sess = tf.Session(config=config)
             with self._sess.as_default():
                 self._saver = tf.train.Saver()
@@ -109,7 +119,7 @@ class Facey:
                     self._sess.run(tf.global_variables_initializer())
                     print("Model Initialized!")
 
-    def train(self, x_train, num_epochs, start_stop_info=True, progress_info=True):
+    def train(self, x_train, num_epochs, start_stop_info=True, progress_info=True, log_dir=None):
         """Trains the model using the data provided as a batch.
 
         Because GenSeg typically runs on large datasets, it is often infeasible to load the entire dataset on either
@@ -141,16 +151,46 @@ class Facey:
             # Training loop for parameter tuning
             if start_stop_info:
                 print("Starting training for %d epochs" % num_epochs)
-            last_time = time()
+
+            # These will be passed into sess.run(), the first should be loss and last should be summaries.
+            graph_elements = (self._loss, self._train_step, self._summaries)
+
+            if log_dir is not None:
+                if self._summary_writer is None:
+                    print("Enabling Summaries!")
+                    print("Run \"tensorboard --logdir=path/to/log-directory\" to view the summaries.")
+                    self._summary_writer = tf.summary.FileWriter(log_dir, graph=self._graph)
+
             for epoch in range(num_epochs):
-                _, loss_val = self._sess.run(
-                    [self._train_step, self._loss],
+                # We need to decide whether to enable the summaries or not to save on computation
+                if self._needs_update and log_dir is not None:
+                    chosen_elements = None  # Include summaries
+                else:
+                    chosen_elements = -1  # Don't include summaries
+
+                outputs = self._sess.run(
+                    graph_elements[:chosen_elements],
                     feed_dict={self._x: x_train, self._phase_train: True}
                 )
+
+                loss_val = outputs[0]  # Unpack the loss_val from the outputs
+
+                if progress_info and self._needs_update:  # Only print progress when needed
+                    print("Current Loss Value: %.10f, Iteration: %d, Percent Complete: %.4f"
+                          % (loss_val, self._iter_count, epoch / num_epochs * 100))
+
+                if self._needs_update and log_dir is not None:  # Only compute summaries when needed
+                    self._summary_writer.add_summary(outputs[-1], self._iter_count)
+
                 current_time = time()
-                if progress_info and (current_time - last_time) >= 5:  # Only print progress every 5 seconds
-                    last_time = current_time
-                    print("Current Loss Value: %.10f, Percent Complete: %.4f" % (loss_val, epoch / num_epochs * 100))
+                if (current_time - self._last_time) >= 5:  # Update logs/progress every 5 seconds
+                    self._last_time = current_time
+                    self._needs_update = True
+                else:
+                    self._needs_update = False
+
+                self._iter_count += 1
+
             if start_stop_info:
                 print("Completed Training.")
             return loss_val

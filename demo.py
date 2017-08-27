@@ -43,7 +43,7 @@ def main():
         print("Training model...")
         train(train_data, model)
 
-    apply_demo()
+    train_demo()
 
 
 def apply(dataset, model):
@@ -56,14 +56,14 @@ def train(train_data, model):
     def training_end():
         model.save_model(MODEL_PATH)
         elapsed_time = time() - start_time
-        print("Elapsed time: %d" % elapsed_time)
+        print("Elapsed time: %d seconds" % elapsed_time)
 
     atexit.register(training_end)
 
     start_time = time()
     for i in range(0, IMAGES, BATCH_SIZE):
         minibatch = train_data[i:i+BATCH_SIZE]
-        loss = model.train(minibatch, EPOCHS, start_stop_info=False, progress_info=True)
+        loss = model.train(minibatch, EPOCHS, start_stop_info=False, progress_info=True, log_dir="logs/")
         # print("Loss Value: %f" % loss)
     training_end()
 
@@ -112,8 +112,7 @@ def load_model(data_shape):
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True  # Make it so that the program does not grab all GPUs' memory at start
 
-    glob(MODEL_PATH + "*")
-    if len(glob(MODEL_PATH + "*")) is 3:
+    if len(glob(MODEL_PATH + "*")) is 3:  # If there are three files beginning with `MODEL_PATH`
         kevin = Facey(input_shape=data_shape, seed=SEED, weights=weights, load_model=MODEL_PATH, config=config)
     else:
         kevin = Facey(input_shape=data_shape, weights=weights, seed=SEED, config=config)
