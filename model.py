@@ -103,7 +103,7 @@ class Facey:
                     print("Restoring Model...")
                     load_model = os.path.abspath(load_model)
                     self._saver.restore(self._sess, load_model)
-                    print("Model Restored!")
+                    print("Model Restored from %s" % load_model)
                 else:
                     print("Initializing model...")
                     self._sess.run(tf.global_variables_initializer())
