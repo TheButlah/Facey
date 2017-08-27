@@ -92,7 +92,7 @@ class Facey:
 
             with tf.variable_scope('Pipelining'):
                 self._loss = tf.reduce_mean(tf.abs(self._x - self._x_hat))
-                self._train_step = tf.train.GradientDescentOptimizer(learning_rate=0.001).minimize(self._loss)
+                self._train_step = tf.train.GradientDescentOptimizer(learning_rate=0.05).minimize(self._loss)
 
             self._sess = tf.Session(graph=self._graph)  # Not sure if this really needs to explicitly specify the graph
             with self._sess.as_default():

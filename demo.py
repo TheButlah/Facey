@@ -26,7 +26,7 @@ weights = None
 def main():
     dataset = load_dataset()
     train_data, test_data = train_test_split(dataset, train_size=0.8)
-    #del dataset
+    del dataset
     model = load_model((None,) + train_data.shape[1:])
 
     def training_end():
@@ -81,8 +81,6 @@ def load_dataset():
                     should_break = True
                     break
         np.savez_compressed(FILENAME, dataset=dataset)
-    print("Printing number of non-zero entries in images:")
-    print(np.sum(dataset > 0, axis=(1, 2, 3)))
     return dataset
 
 
