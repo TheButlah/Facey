@@ -99,7 +99,7 @@ class Facey:
 
             with tf.variable_scope('Pipelining'):
                 self._loss = tf.reduce_mean(tf.abs(self._x - self._x_hat))
-                self._train_step = tf.train.AdamOptimizer(learning_rate=0.05).minimize(self._loss)
+                self._train_step = tf.train.GradientDescentOptimizer(learning_rate=0.01).minimize(self._loss)
 
             with tf.variable_scope('Summaries'):
                 tf.summary.scalar('Loss', self._loss)
