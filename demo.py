@@ -34,7 +34,7 @@ def main():
         elapsed_time = time() - start_time
         print("Elapsed time: %d" % elapsed_time)
 
-    atexit.register(training_end, model)
+    atexit.register(training_end)
 
     start_time = time()
     for i in range(0, IMAGES, BATCH_SIZE):
