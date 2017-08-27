@@ -9,7 +9,7 @@ import os
 class Facey:
     """Facey is an unsupervised convolutional autoencoder for facial reconstruction"""
 
-    def __init__(self, input_shape, weights, seed=None, load_model=None):
+    def __init__(self, input_shape, weights, seed=None, load_model=None, config=None):
         """Initializes the architecture of GenSeg and returns an instance.
 
         Currently, only 1<=N<=3 spatial dimensions in the input data are supported due to limitations in TensorFlow, so
@@ -19,10 +19,12 @@ class Facey:
             input_shape:    A list that represents the shape of the input. Can contain None as the first element to
                             indicate that the batch size can vary (this is the preferred way to do it). The spatial dims
                             should be divisible by 16. Example: [None, 32, 32, 32, 1] for 3D data.
+            weights:        A dict-like structure that holds the weights for the encoder
             seed:           An integer used to seed the initial random state. Can be None to generate a new random seed.
             load_model:     If not None, then this should be a string indicating the checkpoint file containing data
                             that will be used to initialize the parameters of the model. Typically used when loading a
                             pre-trained model, or resuming a previous training session.
+            config:         A protobuf used to configure the model. For example, use this to enable dynamic mem alloc.
         """
         print("Constructing Architecture...")
         self._input_shape = tuple(input_shape)  # Tuples are used to ensure the dimensions are immutable
@@ -94,7 +96,7 @@ class Facey:
                 self._loss = tf.reduce_mean(tf.abs(self._x - self._x_hat))
                 self._train_step = tf.train.GradientDescentOptimizer(learning_rate=0.05).minimize(self._loss)
 
-            self._sess = tf.Session(graph=self._graph)  # Not sure if this really needs to explicitly specify the graph
+            self._sess = tf.Session(config=config)
             with self._sess.as_default():
                 self._saver = tf.train.Saver()
                 if load_model is not None:

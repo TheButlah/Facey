@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os.path
 import atexit
+import tensorflow as tf
 
 from model import Facey
 from scipy.misc import imread
@@ -85,10 +86,13 @@ def load_dataset():
 
 
 def load_model(data_shape):
+    config = tf.ConfigProto()
+    config.gpu_options.allow_growth = True  # Make it so that the program does not grab all GPUs' memory at start
+
     if os.path.isfile(MODEL_PATH):
-        kevin = Facey(input_shape=data_shape, seed=SEED, weights=weights, load_model=MODEL_PATH)
+        kevin = Facey(input_shape=data_shape, seed=SEED, weights=weights, load_model=MODEL_PATH, config=config)
     else:
-        kevin = Facey(input_shape=data_shape, weights=weights, seed=SEED)
+        kevin = Facey(input_shape=data_shape, weights=weights, seed=SEED, config=config)
     return kevin
 
 
