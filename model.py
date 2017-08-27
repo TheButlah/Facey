@@ -38,6 +38,7 @@ class Facey:
 
             with tf.variable_scope('Input'):
                 self._x = tf.placeholder(tf.float32, shape=x_shape, name="X")
+                # tmp = tf.Print(self._x, [tf.reduce_sum(tf.cast(self._x > 0, tf.uint8))], message="Nonzeros in input: ")
                 self._phase_train = tf.placeholder(tf.bool, name="Phase")
 
             with tf.variable_scope('Preprocessing'):

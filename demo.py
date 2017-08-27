@@ -17,10 +17,11 @@ SEED = 1337
 
 WIDTH = 250
 HEIGHT = 250
-IMAGES = 100
-BATCH_SIZE = 1
+IMAGES = 13233
+BATCH_SIZE = 10
 
 weights = None
+
 
 def main():
     dataset = load_dataset()
@@ -37,9 +38,9 @@ def main():
 
     start_time = time()
     for i in range(0, IMAGES, BATCH_SIZE):
-        minibatch = train_data[i:BATCH_SIZE]
-        loss = model.train(minibatch, EPOCHS, start_stop_info=False, progress_info=False)
-        print("Loss Value: %f" % loss)
+        minibatch = train_data[i:i+BATCH_SIZE]
+        loss = model.train(minibatch, EPOCHS, start_stop_info=False, progress_info=True)
+        # print("Loss Value: %f" % loss)
     training_end()
 
     train_results = model.apply(train_data[:10])
@@ -67,7 +68,6 @@ def load_dataset():
     else:
         correct_w = WIDTH // 16 * 16
         correct_h = HEIGHT // 16 * 16
-        print(correct_h, correct_w)
         dataset = np.empty([IMAGES, correct_w, correct_h, 3], dtype=np.ubyte)
         i = 0
         should_break = False
@@ -77,11 +77,12 @@ def load_dataset():
                 img_data = imread(root + '/' + file)
                 dataset[i] = img_data[:correct_w, :correct_h, :]
                 i += 1
-                if i > BATCH_SIZE:
+                if i >= IMAGES:
                     should_break = True
-                    break 
+                    break
         np.savez_compressed(FILENAME, dataset=dataset)
-    assert np.all(np.isfinite(dataset))
+    print("Printing number of non-zero entries in images:")
+    print(np.sum(dataset > 0, axis=(1, 2, 3)))
     return dataset
 
 
